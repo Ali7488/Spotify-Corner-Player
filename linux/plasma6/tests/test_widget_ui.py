@@ -43,6 +43,34 @@ class WidgetThemeTests(unittest.TestCase):
         self.assertIn("value: media.volumeAvailable ? Math.round(media.playerVolume * 100) : 0", section)
         self.assertIn("onMoved: media.setPlayerVolume(value / 100)", section)
 
+    def test_previous_cues_reverse_record_without_changing_media_navigation(self):
+        popup = (UI_DIR / "VinylPopup.qml").read_text(encoding="utf-8")
+        self.assertIn("property real rewindOffset: 0", popup)
+        self.assertIn('property: "rewindOffset"', popup)
+        self.assertIn("rewindCue.to = rewindOffset - 360", popup)
+        self.assertIn("recordStage.rewindOffset = recordStage.rewindOffset % 360", popup)
+        # Both the incoming record and outgoing artwork must share the
+        # same visual angle to avoid a discontinuity during track changes.
+        self.assertEqual(
+            popup.count("platterAngle: recordStage.platterAngle + recordStage.rewindOffset"), 2
+        )
+        previous = popup.split('Accessible.name: "Previous track"', 1)[1].split(
+            "PlayerButton {", 1
+        )[0]
+        self.assertIn("recordStage.cuePrevious();", previous)
+        self.assertIn("media.player.Previous();", previous)
+        self.assertLess(previous.index("recordStage.cuePrevious();"),
+                        previous.index("media.player.Previous();"))
+        next_button = popup.split('Accessible.name: "Next track"', 1)[1].split(
+            "PlayerButton {", 1
+        )[0]
+        self.assertIn("onClicked: media.player.Next()", next_button)
+        # Looping forward spin remains independent of the one-shot reverse.
+        self.assertIn("to: recordStage.spinStartAngle + 360", popup)
+        self.assertIn("loops: Animation.Infinite", popup)
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
