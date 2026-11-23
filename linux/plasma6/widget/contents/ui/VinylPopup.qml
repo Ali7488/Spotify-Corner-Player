@@ -17,6 +17,19 @@ Rectangle {
     readonly property color coral: palette.accent
     readonly property color forest: palette.surface
     readonly property color line: palette.border
+    // Stable vector glyphs. Avoid depending on installed icon-theme names and
+    // keep repeat/shuffle/pin/etc. visually compact on every Plasma theme.
+    readonly property var utilityPaths: ({
+        "shuffle": "M 3 7 H 6 C 10 7 12 17 16 17 H 21 M 18 14 L 21 17 L 18 20 M 3 17 H 6 C 9 17 11 7 16 7 H 21 M 18 4 L 21 7 L 18 10",
+        "repeat": "M 4 10 V 7 A 3 3 0 0 1 7 4 H 20 M 17 1 L 20 4 L 17 7 M 20 14 V 17 A 3 3 0 0 1 17 20 H 4 M 7 17 L 4 20 L 7 23",
+        "repeat-one": "M 4 10 V 7 A 3 3 0 0 1 7 4 H 20 M 17 1 L 20 4 L 17 7 M 20 14 V 17 A 3 3 0 0 1 17 20 H 4 M 7 17 L 4 20 L 7 23 M 11 10 L 13 9 V 15",
+        "pin": "M 8 3 H 16 L 15 8 L 18 11 V 13 H 6 V 11 L 9 8 Z M 12 13 V 22",
+        "unpin": "M 8 3 H 16 L 15 8 L 18 11 V 13 H 6 V 11 L 9 8 M 12 13 V 22 M 3 3 L 21 21",
+        "compact": "M 3 9 H 9 V 3 M 21 9 H 15 V 3 M 3 15 H 9 V 21 M 21 15 H 15 V 21",
+        "expand": "M 9 3 H 3 V 9 M 15 3 H 21 V 9 M 3 15 V 21 H 9 M 21 15 V 21 H 15",
+        "artwork": "M 3 4 H 21 V 20 H 3 Z M 3 17 L 8 11 L 12 15 L 16 10 L 21 16 M 15 7 A 1 1 0 1 0 17 7 A 1 1 0 1 0 15 7",
+        "vinyl": "M 12 3 A 9 9 0 1 0 12 21 A 9 9 0 1 0 12 3 M 12 9 A 3 3 0 1 0 12 15 A 3 3 0 1 0 12 9 M 12 12 H 12.1"
+    })
     readonly property var transportPaths: ({
         "media-skip-backward": "M 5 4 H 9 V 24 H 5 Z M 23 4 L 9 14 L 23 24 Z",
         "media-playback-start": "M 7 4 L 23 14 L 7 24 Z",
@@ -47,7 +60,12 @@ Rectangle {
         property string symbol: ""
         property bool accent: false
         property bool small: false
+        property bool outlineSymbol: false
+        property string hint: ""
         hoverEnabled: true
+        QQC.ToolTip.visible: button.hovered && button.hint.length > 0
+        QQC.ToolTip.text: button.hint
+        QQC.ToolTip.delay: 450
         opacity: enabled ? 1 : 0.48
         background: Rectangle {
             radius: button.height < 40 ? 10 : 14
@@ -58,17 +76,23 @@ Rectangle {
             border.color: button.accent || button.visualFocus ? popup.coral : popup.line
         }
         contentItem: Item {
-            implicitWidth: button.symbol ? 30 : caption.implicitWidth
-            implicitHeight: button.symbol ? 30 : caption.implicitHeight
+            implicitWidth: button.symbol ? (button.small ? 22 : 30) : caption.implicitWidth
+            implicitHeight: button.symbol ? (button.small ? 22 : 30) : caption.implicitHeight
             Shape {
                 anchors.centerIn: parent
-                width: 28
-                height: 28
+                width: button.small ? 21 : 28
+                height: width
                 visible: Boolean(button.symbol)
                 ShapePath {
-                    strokeWidth: -1
-                    fillColor: button.accent ? popup.palette.onAccent : popup.cream
-                    PathSvg { path: popup.transportPaths[button.symbol] ?? "" }
+                    strokeWidth: button.outlineSymbol ? 2 : -1
+                    strokeColor: button.accent ? popup.palette.onAccent : popup.cream
+                    fillColor: button.outlineSymbol ? "transparent"
+                        : (button.accent ? popup.palette.onAccent : popup.cream)
+                    PathSvg {
+                        path: button.outlineSymbol
+                            ? (popup.utilityPaths[button.symbol] ?? "")
+                            : (popup.transportPaths[button.symbol] ?? "")
+                    }
                 }
             }
             Text {
@@ -86,11 +110,12 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: media.compactMode ? 14 : 20
-        spacing: media.compactMode ? 7 : 10
+        anchors.margins: media.compactMode ? 11 : 20
+        spacing: media.compactMode ? 6 : 10
 
         RowLayout {
             Layout.fillWidth: true
+            visible: !media.compactMode
             spacing: 10
             Rectangle { width: 8; height: 8; radius: 4; color: popup.coral }
             ColumnLayout {
@@ -112,12 +137,13 @@ Rectangle {
             QQC.Button {
                 id: sourceButton
                 objectName: "sourceButton"
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 32
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
                 text: "♫"
                 Accessible.name: "Choose Spotify or Spotifast"
                 QQC.ToolTip.visible: hovered
-                QQC.ToolTip.text: "Playback source"
+                QQC.ToolTip.text: "Select playback source"
+                QQC.ToolTip.delay: 450
                 background: Rectangle {
                     radius: 9
                     color: sourceButton.hovered ? popup.palette.hover : popup.palette.button
@@ -162,12 +188,13 @@ Rectangle {
             QQC.Button {
                 id: themeButton
                 objectName: "themeButton"
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 32
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
                 text: "◐"
                 Accessible.name: "Choose color theme"
                 QQC.ToolTip.visible: hovered
-                QQC.ToolTip.text: "Color theme"
+                QQC.ToolTip.text: "Choose color theme"
+                QQC.ToolTip.delay: 450
                 background: Rectangle {
                     radius: 9
                     color: themeButton.hovered ? popup.palette.hover : popup.palette.button
@@ -314,85 +341,113 @@ Rectangle {
 
             PlayerButton {
                 objectName: "shuffleButton"
-                Layout.preferredWidth: 66
-                Layout.preferredHeight: 26
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
                 small: true
-                text: media.shuffleOn ? "Shuffle ✓" : "Shuffle"
-                Accessible.name: media.shuffleOn ? "Disable shuffle" : "Enable shuffle"
+                outlineSymbol: true
+                symbol: "shuffle"
+                hint: media.shuffleAvailable
+                    ? (media.shuffleOn ? "Disable shuffle" : "Enable shuffle")
+                    : "Shuffle unavailable"
+                Accessible.name: hint
                 enabled: media.shuffleAvailable
                 accent: media.shuffleOn
                 onClicked: media.toggleShuffle()
             }
         }
 
+        // Utility glyphs are intentionally small. Text lives in hover tooltips
+        // and accessible names, never in oversized action buttons.
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 27
+            Layout.preferredHeight: 28
+            visible: !media.compactMode
             spacing: 5
+            Item { Layout.fillWidth: true }
             PlayerButton {
                 objectName: "compactButton"
-                Layout.fillWidth: true
-                Layout.preferredHeight: 26
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
                 small: true
-                text: media.compactMode ? "Expand" : "Compact"
-                Accessible.name: media.compactMode ? "Expanded view" : "Compact view"
+                outlineSymbol: true
+                symbol: "compact"
+                hint: "Switch to compact view"
+                Accessible.name: hint
                 onClicked: media.toggleCompactMode()
             }
             PlayerButton {
                 objectName: "pinButton"
-                Layout.fillWidth: true
-                Layout.preferredHeight: 26
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
                 small: true
+                outlineSymbol: true
+                symbol: media.pinned ? "unpin" : "pin"
                 accent: media.pinned
-                text: media.pinned ? "Unpin" : "Pin"
-                Accessible.name: media.pinned ? "Unpin player" : "Pin player open"
+                hint: media.pinned ? "Unpin: close on click-away" : "Pin player open"
+                Accessible.name: hint
                 onClicked: media.togglePinned()
             }
             PlayerButton {
                 objectName: "repeatButton"
-                Layout.fillWidth: true
-                Layout.preferredHeight: 26
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
                 small: true
-                text: media.repeatAvailable ? (media.repeatLabel === "Repeat one" ? "Repeat 1" : media.repeatLabel === "Repeat all" ? "Repeat all" : "Repeat") : "Repeat"
-                Accessible.name: media.repeatLabel
+                outlineSymbol: true
+                symbol: media.repeatLabel === "Repeat one" ? "repeat-one" : "repeat"
+                accent: media.repeatAvailable && media.repeatLabel !== "Repeat off"
+                hint: media.repeatAvailable
+                    ? (media.repeatLabel + " (click to cycle)")
+                    : "Repeat unavailable"
+                Accessible.name: hint
                 enabled: media.repeatAvailable
                 onClicked: media.cycleRepeat()
             }
             PlayerButton {
                 objectName: "artworkButton"
-                Layout.fillWidth: true
-                Layout.preferredHeight: 26
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
                 small: true
-                text: media.artworkMode === "Vinyl" ? "Vinyl" : "Artwork"
-                Accessible.name: "Switch between original artwork and spinning vinyl"
-                QQC.ToolTip.visible: hovered
-                QQC.ToolTip.text: "Display: " + media.artworkMode + ". Click to switch."
+                outlineSymbol: true
+                symbol: media.artworkMode === "Vinyl" ? "artwork" : "vinyl"
+                hint: media.artworkMode === "Vinyl"
+                    ? "Show original album artwork" : "Show spinning vinyl"
+                Accessible.name: hint
                 onClicked: media.toggleArtworkMode()
             }
         }
 
-        // Compact mode keeps title, artist, progress, and transport accessible.
-        ColumnLayout {
+        // Collapsed view contains only the title, transport buttons and the
+        // necessary Expand action. No artist, progress, volume or settings.
+        RowLayout {
+            objectName: "compactTitleRow"
             Layout.fillWidth: true
-            Layout.preferredHeight: media.compactMode ? 48 : 0
+            Layout.preferredHeight: 28
             visible: media.compactMode
-            spacing: 2
+            spacing: 6
             QQC.Label {
+                objectName: "compactTrackTitle"
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: media.track || "No track playing"
                 textFormat: Text.PlainText
                 color: popup.cream
-                font.pixelSize: 17
+                font.pixelSize: 15
                 font.bold: true
                 elide: Text.ElideRight
+                QQC.ToolTip.visible: truncated && hovered
+                QQC.ToolTip.text: text
+                QQC.ToolTip.delay: 450
             }
-            QQC.Label {
-                Layout.fillWidth: true
-                text: media.artist || media.sourceLabel
-                textFormat: Text.PlainText
-                color: popup.muted
-                font.pixelSize: 12
-                elide: Text.ElideRight
+            PlayerButton {
+                objectName: "expandCompactButton"
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
+                small: true
+                outlineSymbol: true
+                symbol: "expand"
+                hint: "Expand player"
+                Accessible.name: hint
+                onClicked: media.toggleCompactMode()
             }
         }
 
@@ -508,6 +563,7 @@ Rectangle {
 
         QQC.Slider {
             id: seek
+            visible: !media.compactMode
             Layout.fillWidth: true
             Layout.preferredHeight: 20
             leftPadding: 6
@@ -551,6 +607,7 @@ Rectangle {
         RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 34
+            visible: !media.compactMode
             spacing: 8
             QQC.Label {
                 text: "VOL"
@@ -613,15 +670,19 @@ Rectangle {
         }
 
         RowLayout {
+            objectName: "transportRow"
             Layout.fillWidth: true
-            spacing: 8
+            Layout.preferredHeight: media.compactMode ? 37 : 48
+            spacing: media.compactMode ? 6 : 8
 
             PlayerButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                Layout.preferredHeight: 48
+                Layout.preferredHeight: media.compactMode ? 37 : 48
+                small: media.compactMode
                 symbol: "media-skip-backward"
                 Accessible.name: "Previous track"
+                hint: "Previous track"
                 enabled: media.player?.canGoPrevious ?? false
                 onClicked: {
                     // Playback navigation already works. Rewind only the
@@ -635,19 +696,23 @@ Rectangle {
             PlayerButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                Layout.preferredHeight: 48
+                Layout.preferredHeight: media.compactMode ? 37 : 48
+                small: media.compactMode
                 symbol: media.playing ? "media-playback-pause" : "media-playback-start"
                 accent: true
                 Accessible.name: media.playing ? "Pause" : "Play"
+                hint: media.playing ? "Pause" : "Play"
                 enabled: media.playing ? (media.player?.canPause ?? false) : (media.player?.canPlay ?? false)
                 onClicked: media.playing ? media.player.Pause() : media.player.Play()
             }
             PlayerButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                Layout.preferredHeight: 48
+                Layout.preferredHeight: media.compactMode ? 37 : 48
+                small: media.compactMode
                 symbol: "media-skip-forward"
                 Accessible.name: "Next track"
+                hint: "Next track"
                 enabled: media.player?.canGoNext ?? false
                 onClicked: media.player.Next()
             }
@@ -686,7 +751,7 @@ Rectangle {
 
         QQC.Label {
             Layout.fillWidth: true
-            visible: Boolean(text)
+            visible: !media.compactMode && Boolean(text)
             text: popup.lyricsError || media.launchError
             color: popup.coral
             wrapMode: Text.Wrap
