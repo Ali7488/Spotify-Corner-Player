@@ -1,0 +1,51 @@
+name: Sync v1.4 public release descriptions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/sync-v1.4-release-descriptions.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync-release-descriptions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace published descriptions without modifying release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release view 1.4.0 -R "$GITHUB_REPOSITORY" >/dev/null
+          gh release view v1.4.0-rc.1 -R "$GITHUB_REPOSITORY" >/dev/null
+          gh release edit 1.4.0 \
+            -R "$GITHUB_REPOSITORY" \
+            --notes-file docs/v1.4-stable-release-notes.md
+          gh release edit v1.4.0-rc.1 \
+            -R "$GITHUB_REPOSITORY" \
+            --notes-file docs/v1.4-release-notes.md
+      - name: Validate both public descriptions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          bad = re.compile(r'(?i)(?:résumé|resume|portfolio\s+(?:project|claim)|career\s+(?:note|claim))')
+          for tag in ('1.4.0', 'v1.4.0-rc.1'):
+              output = subprocess.check_output(
+                  ['gh', 'release', 'view', tag, '-R', os.environ['GITHUB_REPOSITORY'], '--json', 'body,assets'],
+                  text=True
+              )
+              release = json.loads(output)
+              assert not bad.search(release['body']), f'Unwanted career-status text remains in {tag}'
+              assert len(release['assets']) == 2, f'Release assets changed for {tag}'
+              print(f'{tag}: description clean; both assets retained')
+          PY
