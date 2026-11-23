@@ -218,8 +218,8 @@ PlasmoidItem {
     fullRepresentation: Loader {
         Layout.minimumWidth: 400
         Layout.preferredWidth: 432
-        Layout.minimumHeight: compactMode ? 300 : 415
-        Layout.preferredHeight: compactMode ? 328 : 450
+        Layout.minimumHeight: compactMode ? 300 : 480
+        Layout.preferredHeight: compactMode ? 328 : 500
         active: root.expanded
         sourceComponent: VinylPopup { media: root }
     }
