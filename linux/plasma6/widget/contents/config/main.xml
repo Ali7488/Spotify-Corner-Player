@@ -6,6 +6,7 @@
         </entry>
         <entry name="compactMode" type="Bool"><default>false</default></entry>
         <entry name="pinned" type="Bool"><default>false</default></entry>
+        <entry name="artworkMode" type="String"><default>Vinyl</default></entry>
         <entry name="playerPreference" type="String">
             <default>Auto</default>
         </entry>

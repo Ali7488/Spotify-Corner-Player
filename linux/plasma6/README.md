@@ -1,10 +1,10 @@
 # Corner Media Player for KDE Plasma 6 (Linux)
 
-**Version 1.4.3 stable. One public repository, separate release ZIPs:**
-- `Corner-Media-Player-v1.4.3-Windows.zip`: Windows PowerShell/WPF implementation
-- `Corner-Media-Player-v1.4.3-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
+**Version 1.5.0 stable. One public repository, separate release ZIPs:**
+- `Corner-Media-Player-v1.5.0-Windows.zip`: Windows PowerShell/WPF implementation
+- `Corner-Media-Player-v1.5.0-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
 
-The Linux widget is based on the custom **Emerald Vinyl v1.0.3** widget. It is **not** a port of Windows WPF code. Both versions share the same five named visual themes and in-player theme selection, while each uses its native platform's media APIs.
+The Linux widget is based on the custom **Emerald Vinyl v1.0.3** widget. It is **not** a port of Windows WPF code. Both versions share five visual themes while each uses its native platform's media APIs. The Linux widget provides a saved Artwork/Vinyl toggle: Artwork shows the original cover as a stationary, uncropped square; Vinyl spins a themed decorative record without embedding the album image.
 
 
 ## Requirements
@@ -40,10 +40,11 @@ Open Plasma desktop/panel **Edit Mode → Add Widgets**, find **Corner Media Pla
 Click the widget's small vinyl icon to open the popup.
 
 - **◐ color button** opens a menu with five themes and their paired accent swatches. Selection saves in Plasma's ordinary KConfig widget settings, and the popup recolors in place.
-- **Compact view / Expanded view:** reduces the popup to track information, seeking, volume and transport controls. The control is directly in the popup and the preference persists.
-- **Pin open / Unpin (Linux only):** uses Plasma 6's native `hideOnWindowDeactivate` property so the popup remains open when it loses focus. There is intentionally no pin control in Windows v1.4.
+- **Compact view / Expanded view:** reduces the popup to track information, seeking, volume and transport controls. Compact, pin, repeat and shuffle controls now use smaller buttons. The control is directly in the popup and the preference persists.
+- **Pin open / Unpin:** uses Plasma 6's native `hideOnWindowDeactivate` property so the popup remains open when it loses focus. There is intentionally no pin control in Windows v1.4.
 - **Repeat:** cycles Off → Repeat all → Repeat one, only when the selected MPRIS player implements the optional loop property.
 - **Volume:** controls only the selected MPRIS player's own normalized volume (0–100%). It does not adjust global sound volume. Unsupported players show N/A and disable the control.
+- **Vinyl / Artwork button:** swaps between a spinning themed decorative vinyl record (default for existing installs) and untouched, stationary square album artwork; the choice persists in the widget's normal configuration.
 - **♫ source button** opens **Auto / Spotify / Spotifast**. Auto follows active playback, otherwise prefers a detected Spotifast MPRIS session. Other MPRIS players (YouTube Music, Firefox, etc.) are ignored.
 - If the chosen app is installed but not running, the popup shows that its MPRIS session is not running. The **Open Spotify / Open Spotifast** action tries registered app launchers, then native/Flatpak, with Snap fallback for Spotify. The source can still be selected when idle.
 - Preference survives Plasma restarts. Unlike the Windows WPF implementation, color changes in the QML widget need **no app restart**.
@@ -58,7 +59,7 @@ Click the widget's small vinyl icon to open the popup.
 
 ## Player controls
 
-Artwork-centered vinyl spins only while the selected MPRIS player reports playback, with animation/track transitions inherited from Emerald Vinyl. The popup retains previous / play-pause / next, seek when supported, shuffle when supported, current song and artist, elapsed/total time, an Open Player button, and a lyrics browser search. The QML widget does not control a global audio endpoint volume; that Windows-specific capability is not falsely advertised for Linux.
+Decorative vinyl spins only while the selected MPRIS player reports playback. The existing reverse cue when Previous is clicked remains for Vinyl mode. Artwork mode shows the unmodified square cover without motion or cropping. The popup retains previous / play-pause / next, seek when supported, shuffle when supported, current song and artist, elapsed/total time, an Open Player button, and a lyrics browser search. The QML widget does not control a global audio endpoint volume; that Windows-specific capability is not falsely advertised for Linux.
 
 ## Upgrade from manually installed or earlier versions
 
@@ -83,11 +84,11 @@ python3 -m unittest discover -s linux/plasma6/tests -v
 python3 linux/plasma6/build-release.py
 ```
 
-Output: `dist/Corner-Media-Player-v1.4.3-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
+Output: `dist/Corner-Media-Player-v1.5.0-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
 
 ```bash
-gh release upload 1.4.3 \
-  dist/Corner-Media-Player-v1.4.3-Plasma6.zip \
+gh release upload 1.5.0 \
+  dist/Corner-Media-Player-v1.5.0-Plasma6.zip \
   -R Ali7488/Spotify-Corner-Player
 ```
 

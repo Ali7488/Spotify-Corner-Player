@@ -1,11 +1,10 @@
 import QtQuick
-import QtQuick.Effects
 import "ThemeColors.js" as ThemeColors
 
+// Original decorative vinyl: no third-party album artwork is cropped or rotated.
 Item {
     id: record
     property var palette: ThemeColors.get("Forest")
-    property url artwork
     property real platterAngle: 0
 
     transform: Rotation {
@@ -47,31 +46,6 @@ Item {
         color: record.palette.vinylLabel
         border.color: record.palette.vinylLabelBorder
 
-        Image {
-            id: cover
-            anchors.fill: parent
-            source: record.artwork
-            sourceSize: Qt.size(320, 320)
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            visible: status === Image.Ready
-            layer.enabled: visible
-            layer.effect: MultiEffect {
-                maskEnabled: true
-                maskSource: labelMask
-                autoPaddingEnabled: false
-            }
-        }
-
-        Rectangle {
-            id: labelMask
-            anchors.fill: parent
-            radius: width / 2
-            color: "white"
-            visible: false
-            layer.enabled: true
-        }
-
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             y: parent.height * 0.15
@@ -81,7 +55,6 @@ Item {
             color: record.palette.text
             border.color: record.palette.surface
         }
-
         Rectangle {
             anchors.centerIn: parent
             width: 8

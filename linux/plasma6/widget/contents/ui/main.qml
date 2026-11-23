@@ -18,6 +18,11 @@ PlasmoidItem {
     hideOnWindowDeactivate: !pinned
     readonly property bool compactMode: Plasmoid.configuration.compactMode ?? false
     readonly property bool pinned: Plasmoid.configuration.pinned ?? false
+    readonly property string artworkMode: Plasmoid.configuration.artworkMode === "Artwork" ? "Artwork" : "Vinyl"
+
+    function toggleArtworkMode() {
+        Plasmoid.configuration.artworkMode = artworkMode === "Vinyl" ? "Artwork" : "Vinyl";
+    }
 
     function toggleCompactMode() {
         Plasmoid.configuration.compactMode = !compactMode;

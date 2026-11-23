@@ -17,11 +17,11 @@ def main() -> int:
         raise ValueError("Not a Plasma applet.")
     if metadata.get("KPlugin", {}).get("Id") != "org.mohannad.spotify.cornerplayer":
         raise ValueError("Unexpected applet ID.")
-    if metadata.get("KPlugin", {}).get("Version") != "1.4.3":
+    if metadata.get("KPlugin", {}).get("Version") != "1.5.0":
         raise ValueError("Release version mismatch.")
     settings = ET.parse(root / "widget/contents/config/main.xml")
     entries = {element.attrib.get("name") for element in settings.iter() if element.tag.endswith("entry")}
-    if not {"themeId", "playerPreference", "compactMode", "pinned"} <= entries:
+    if not {"themeId", "playerPreference", "compactMode", "pinned", "artworkMode"} <= entries:
         raise ValueError("Persistent theme/player settings not defined.")
 
     license_file = root.parent.parent / "LICENSE"
@@ -43,14 +43,14 @@ def main() -> int:
     for string in ("Spotify", "Spotifast", "Mpris2Model", "setPlayerPreference", "Plasmoid.configuration"):
         if string not in source:
             raise ValueError(f"Missing runtime feature: {string}")
-    for string in ("themeButton", "sourceButton", "themeMenu", "sourceMenu", "compactButton", "pinButton", "repeatButton", "volumeSlider"):
+    for string in ("themeButton", "sourceButton", "themeMenu", "sourceMenu", "compactButton", "pinButton", "repeatButton", "artworkButton", "volumeSlider"):
         if string not in popup:
             raise ValueError(f"Missing popup control: {string}")
     for string in ("Burgundy", "Forest", "Sapphire", "Amethyst", "Obsidian"):
         if string not in theme:
             raise ValueError(f"Missing color scheme: {string}")
 
-    output = root.parent.parent / "dist/Corner-Media-Player-v1.4.3-Plasma6.zip"
+    output = root.parent.parent / "dist/Corner-Media-Player-v1.5.0-Plasma6.zip"
     output.parent.mkdir(parents=True, exist_ok=True)
     with ZipFile(output, "w", ZIP_DEFLATED, compresslevel=9) as zipfile:
         for entry in files:
