@@ -5,11 +5,11 @@ on:
     paths:
       - "linux/plasma6/**"
       - "LICENSE"
-      - "LICENSE"
       - ".github/workflows/validate-plasma6.yml"
   pull_request:
     paths:
       - "linux/plasma6/**"
+      - "LICENSE"
       - ".github/workflows/validate-plasma6.yml"
 
 permissions:
