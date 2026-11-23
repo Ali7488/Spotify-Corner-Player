@@ -657,6 +657,12 @@ function Reset-MediaPanel([string] $caption) {
     $script:artist.Text = ''
     $script:detail.Text = ''
     $script:progress.Value = 0
+    $script:progress.IsEnabled = $false
+    $script:seekAvailable = $false
+    $script:durationTicks = 0
+    $script:seekStartTicks = 0
+    $script:repeatButton.IsEnabled = $false
+    $script:repeatButton.Content = 'Repeat'
     $script:progress.Visibility = 'Collapsed'
     $script:previous.IsEnabled = $false
     $script:toggle.IsEnabled = $false
@@ -732,6 +738,14 @@ function Update-Media {
         # Set-DiscMotion is stateful; its animation is not restarted on every poll.
         Set-DiscMotion ([bool] ($playing -and $script:expanded -and !$script:closing))
         $controls = $info.Controls
+        $script:repeatButton.IsEnabled = [bool] $controls.IsRepeatEnabled
+        $script:repeatButton.Content = if ($controls.IsRepeatEnabled) {
+            switch ("$($info.AutoRepeatMode)") {
+                'Track' { 'Repeat one' }
+                'List' { 'Repeat all' }
+                default { 'Repeat off' }
+            }
+        } else { 'Repeat' }
         $script:previous.IsEnabled = $controls.IsPreviousEnabled
         $script:next.IsEnabled = $controls.IsNextEnabled
         $script:toggle.IsEnabled = $controls.IsPlayPauseToggleEnabled -or
@@ -742,11 +756,17 @@ function Update-Media {
         [System.Windows.Automation.AutomationProperties]::SetName($script:toggle, $script:toggle.ToolTip)
         $timeline = $session.GetTimelineProperties()
         $duration = $timeline.EndTime.TotalSeconds - $timeline.StartTime.TotalSeconds
+        $script:seekAvailable = [bool] ($controls.IsPlaybackPositionEnabled -and $duration -gt 0)
+        $script:progress.IsEnabled = $script:seekAvailable
+        $script:durationTicks = if ($duration -gt 0) { [int64]($timeline.EndTime.Ticks - $timeline.StartTime.Ticks) } else { 0 }
+        $script:seekStartTicks = [int64]$timeline.StartTime.Ticks
         if ($duration -gt 0) {
             $position = $timeline.Position.TotalSeconds - $timeline.StartTime.TotalSeconds
             if ($playing) { $position += [Math]::Max(0, ([DateTimeOffset]::UtcNow - $timeline.LastUpdatedTime).TotalSeconds) }
             $position = [Math]::Min($duration, [Math]::Max(0, $position))
-            $script:progress.Value = 100 * $position / $duration
+            if (!$script:seeking -and !$script:progress.IsMouseCaptureWithin) {
+                $script:progress.Value = 1000 * $position / $duration
+            }
             $script:progress.Visibility = 'Visible'
             $script:detail.Text = '{0} / {1}' -f (Format-PlaybackTime $position), (Format-PlaybackTime $duration)
         } else {
@@ -776,6 +796,36 @@ function Update-Media {
         Set-DiscMotion $false
         Write-MediaIssue 'Playback' $_.Exception.ToString()
         $script:notice.Text = 'Spotify metadata briefly unavailable; see logs if it persists.'
+    }
+}
+
+function Invoke-SeekFromSlider {
+    if (!$script:seekAvailable -or $script:durationTicks -le 0 -or $script:controlTask) { return }
+    try {
+        $session = Get-SpotifySession
+        if (!$session -or $session.SourceAppUserModelId -ne $script:playerId) { return }
+        $fraction = [Math]::Max(0, [Math]::Min(1, $script:progress.Value / 1000.0))
+        $ticks = [int64]($script:seekStartTicks + [Math]::Round($fraction * $script:durationTicks))
+        $script:controlTask = New-MediaTask ($session.TryChangePlaybackPositionAsync($ticks)) ([bool])
+    } catch {
+        $script:notice.Text = 'Spotify does not currently accept seeking.'
+        Write-MediaIssue 'Seek' $_.Exception.ToString()
+    }
+}
+
+function Set-RepeatMode {
+    if (!$script:manager -or $script:controlTask -or !$script:repeatButton.IsEnabled) { return }
+    try {
+        $session = Get-SpotifySession
+        if (!$session -or $session.SourceAppUserModelId -ne $script:playerId) { return }
+        $current = "$($session.GetPlaybackInfo().AutoRepeatMode)"
+        $value = switch ($current) { 'None' { 2 } 'List' { 1 } default { 0 } }
+        $mode = [Windows.Media.MediaPlaybackAutoRepeatMode,Windows.Media,ContentType=WindowsRuntime]
+        $script:controlTask = New-MediaTask ($session.TryChangeAutoRepeatModeAsync([Enum]::ToObject($mode, $value))) ([bool])
+    } catch {
+        $script:repeatButton.IsEnabled = $false
+        $script:notice.Text = 'Spotify does not currently accept repeat changes.'
+        Write-MediaIssue 'Repeat' $_.Exception.ToString()
     }
 }
 
@@ -1326,6 +1376,12 @@ function Start-CornerPlayer {
       <DockPanel LastChildFill="True" Margin="2,0,0,12">
         <Button x:Name="close" DockPanel.Dock="Right" Content="&#215;" AutomationProperties.Name="Hide player"
                 Width="34" Height="32" Padding="0" Background="#39202D" />
+        <Button x:Name="repeatButton" DockPanel.Dock="Right" Content="Repeat" AutomationProperties.Name="Repeat mode"
+                ToolTip="Repeat (when supported)" IsEnabled="False" Width="65" Height="32"
+                Padding="0" Background="#39202D" Margin="2,3,2,3" FontSize="10" />
+        <Button x:Name="compactButton" DockPanel.Dock="Right" Content="&#9635;" AutomationProperties.Name="Compact / expanded view"
+                ToolTip="Compact / expanded view" Width="34" Height="32" Padding="0"
+                Background="#39202D" Margin="2,3,2,3" FontSize="17" />
         <Button x:Name="themeButton" DockPanel.Dock="Right" Content="&#9680;" AutomationProperties.Name="Choose color theme"
                 ToolTip="Choose color theme" Width="34" Height="32" Padding="0"
                 Background="#39202D" Margin="3,3,5,3" FontSize="17" />
@@ -1337,7 +1393,7 @@ function Start-CornerPlayer {
           </StackPanel>
         </StackPanel>
       </DockPanel>
-      <Grid Margin="0,0,0,15" Height="133">
+      <Grid x:Name="recordRow" Margin="0,0,0,15" Height="133">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="146" />
           <ColumnDefinition Width="*" />
@@ -1390,10 +1446,12 @@ function Start-CornerPlayer {
           <TextBlock x:Name="detail" Foreground="#BC839B" FontSize="11" Margin="0,10,0,0" />
         </StackPanel>
       </Grid>
-      <Border CornerRadius="2" Background="#503044" Height="4" Margin="3,0,3,11">
-        <ProgressBar x:Name="progress" Height="4" Maximum="100" Foreground="#D45D87" Background="#503044" BorderThickness="0" />
+      <Border CornerRadius="7" Background="#503044" Height="14" Margin="3,0,3,8">
+        <Slider x:Name="progress" Height="14" Minimum="0" Maximum="1000" Value="0"
+                IsMoveToPointEnabled="True" IsEnabled="False" Foreground="#D45D87" Background="#503044"
+                ToolTip="Seek (when supported)" AutomationProperties.Name="Playback position" />
       </Border>
-      <DockPanel Height="30" Margin="3,0,3,8" LastChildFill="True" VerticalAlignment="Center">
+      <DockPanel x:Name="volumeRow" Height="30" Margin="3,0,3,8" LastChildFill="True" VerticalAlignment="Center">
         <Button x:Name="volumeMute" DockPanel.Dock="Left" Width="32" Height="26" Padding="0"
                 Content="&#9835;" ToolTip="Mute Spotify" AutomationProperties.Name="Mute Spotify"
                 Background="#392031" BorderBrush="#764057" />
@@ -1462,7 +1520,7 @@ function Start-CornerPlayer {
                 Data="M 3,2 L 15,10 L 3,18 Z M 17,2 L 20,2 L 20,18 L 17,18 Z" />
         </Button>
       </UniformGrid>
-      <UniformGrid Columns="2" Margin="0,0,0,2">
+      <UniformGrid x:Name="linksRow" Columns="2" Margin="0,0,0,2">
         <Button x:Name="openSpotify" Content="Open Spotify" Background="#392031" />
         <Button x:Name="openLyrics" Content="Lyrics &#9835;" Background="#392031"
                 AutomationProperties.Name="Search lyrics for the current song" ToolTip="Open current song lyrics in a browser" />
@@ -1504,6 +1562,12 @@ function Start-CornerPlayer {
         $script:artist = $script:flyout.FindName('artist')
         $script:detail = $script:flyout.FindName('detail')
         $script:progress = $script:flyout.FindName('progress')
+        $script:recordRow = $script:flyout.FindName('recordRow')
+        $script:volumeRow = $script:flyout.FindName('volumeRow')
+        $script:linksRow = $script:flyout.FindName('linksRow')
+        $script:compactButton = $script:flyout.FindName('compactButton')
+        $script:repeatButton = $script:flyout.FindName('repeatButton')
+        $script:seeking = $false
         $script:previous = $script:flyout.FindName('previous')
         $script:toggle = $script:flyout.FindName('toggle')
         $script:next = $script:flyout.FindName('next')
@@ -1513,6 +1577,7 @@ function Start-CornerPlayer {
         $script:volumePercent = $script:flyout.FindName('volumePercent')
         $script:attachedButton = $script:flyout.FindName('attachedButton')
         $script:themeButton = $script:flyout.FindName('themeButton')
+        Set-CompactLayout (Get-LayoutChoice)
         $script:discMoving = $false
         $script:closing = $false
         $script:expanded = $false
@@ -1583,6 +1648,18 @@ function Start-CornerPlayer {
         $script:previous.Add_Click({ Send-MediaControl 'previous' })
         $script:toggle.Add_Click({ Send-MediaControl 'toggle' })
         $script:next.Add_Click({ Send-MediaControl 'next' })
+        $script:compactButton.Add_Click({ Set-CompactLayout (!$script:compact) })
+        $script:repeatButton.Add_Click({ Set-RepeatMode })
+        $script:progress.Add_PreviewMouseLeftButtonDown({ $script:seeking = $true })
+        $script:progress.Add_PreviewMouseLeftButtonUp({
+            if ($script:seeking) { $script:seeking = $false; Invoke-SeekFromSlider }
+        })
+        $script:progress.Add_PreviewKeyUp({
+            param($sender, $eventArgs)
+            if ($eventArgs.Key -in @('Left','Right','Home','End','PageUp','PageDown')) {
+                Invoke-SeekFromSlider
+            }
+        })
 
 
         # In-player palette chooser. The menu is attached to the existing header
