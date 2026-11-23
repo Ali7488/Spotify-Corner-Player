@@ -186,11 +186,11 @@ def install_widget() -> Path | None:
 def uninstall_widget() -> None:
     target = installation_directory()
     if not target.exists() and not target.is_symlink():
-        print("Spotify Corner Player widget is not installed.")
+        print("Corner Media Player widget is not installed.")
         return
     verify_package(target)
     shutil.rmtree(target)
-    print("Uninstalled Spotify Corner Player widget only.")
+    print("Uninstalled Corner Media Player widget only.")
     print("Existing Plasma panel layout, settings and Emerald Vinyl are unchanged.")
     print("Sign out/in to clear any loaded Plasma instance.")
 
@@ -230,7 +230,7 @@ def main() -> int:
         print("Widget installed in: " + str(installation_directory()))
         if backup:
             print("Previous installation backed up at: " + str(backup))
-        print("Open Plasma Edit Mode > Add Widgets > 'Spotify Corner Player (Plasma 6)'.")
+        print("Open Plasma Edit Mode > Add Widgets > 'Corner Media Player (Plasma 6)'.")
         print("If it is not listed, sign out and in before adding it.")
         print("Existing Emerald Vinyl was not changed.")
         return 0
