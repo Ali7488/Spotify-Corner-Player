@@ -1,12 +1,12 @@
 # Corner Media Player
 
-A lightweight desktop music controller with native implementations for Windows and KDE Plasma 6. It currently supports Spotify on Windows and Spotify or Spotifast on Plasma 6; it is not a general-purpose audio player.
+A lightweight desktop music controller with native implementations for Windows and KDE Plasma 6. The display and playback controls work with an existing media application; Corner Media Player does not stream music. It currently supports active Windows media sessions on Windows and Spotify or Spotifast on Plasma 6; it is not a general-purpose audio player.
 
-> **Current stable: [v1.4.3](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.3).** Adds a brief backwards vinyl rotation when Previous is pressed on Plasma 6. The previous [v1.4.2 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.2) remains available for rollback.
+> **Current stable: [v1.5.0](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.5.0).** Adds a Linux Artwork/Vinyl display toggle, smaller utility controls, and Windows pinning, click-away dismissal, shuffle, and active media-session auto-detection. The previous [v1.4.2 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.2) remains available for rollback.
 
 | Platform | Implementation | Media source |
 | --- | --- | --- |
-| Windows 10/11 | PowerShell 5.1, WPF, Windows media sessions | Spotify desktop |
+| Windows 10/11 | PowerShell 5.1, WPF, Windows media sessions | Auto-detected active Windows media player (Spotify supported; other apps as exposed by Windows) |
 | KDE Plasma 6 | QML / Qt Quick, KDE Plasma and MPRIS | Spotify or Spotifast |
 
 The two versions are packaged as **separate ZIPs**, each including an MIT license copy, under the same GitHub release. They are not one cross-platform binary, and there is no mandatory background web service.
@@ -26,17 +26,17 @@ The two versions are packaged as **separate ZIPs**, each including an MIT licens
 Both versions offer:
 
 - Five dark themes, selectable from the popup: Burgundy Rose, Emerald Forest/Coral, Midnight Sapphire, Royal Amethyst/Gold, Obsidian Gold/Purple
-- Animated vinyl record that follows playback state
+- Animated original decorative vinyl record that follows playback state
 - Track metadata, play/pause, previous/next, a lyrics web-search shortcut
 - Compact/expanded UI (new in v1.4)
 - Repeat controls only when exposed by the selected media session (new in v1.4)
 - Per-user installation and preservation of existing settings
 
-**Windows:** right-edge drawer, tray menu, `Ctrl+Shift+Q`, Spotify-specific volume/mute control, **seek slider** when Windows reports that seeking is supported (new in v1.4). **No pin/unpin option on Windows in v1.4.** Album artwork is intentionally not loaded on Windows due to previous stability issues.
+**Windows:** right-edge drawer, tray menu, `Ctrl+Shift+Q`, a saved **Pin / Unpin** toggle (unpinned dismisses on click-away), smaller compact / pin / repeat / shuffle controls, and **active-media-session auto-detection**. Seeking, repeat and shuffle work only if supported by the selected Windows media session. Spotify-specific volume/mute is intentionally disabled when another player is selected. Windows does not display album artwork because its earlier thumbnail loading was unstable.
 
-**KDE Plasma 6:** album-cover vinyl, Spotify/Spotifast/Auto selection, player-specific volume control, and **Pin open/Unpin** (Linux-only in v1.4). Plasma handles its native panel and MPRIS media sessions. See [Linux setup and compatibility notes](linux/plasma6/README.md).
+**KDE Plasma 6:** a persistent display toggle between **stationary original square album artwork** and **spinning original-artwork-free vinyl**, smaller compact/pin/repeat/shuffle buttons, Spotify/Spotifast/Auto session selection, per-player MPRIS volume, and Pin open/Unpin. Auto follows the playing supported player. The original album cover is never cropped, masked, or rotated by this widget. See [Linux setup and compatibility notes](linux/plasma6/README.md).
 
-Repeat and seeking may be disabled if Spotify/Spotifast does not expose them through its operating-system media interface. The widget cannot force support that the player has not implemented.
+Repeat, shuffle, seeking, and player selection may be limited by the capabilities exposed through operating-system media interfaces. The widget cannot force support that the player has not implemented.
 
 ## Installation
 
@@ -44,7 +44,7 @@ Repeat and seeking may be disabled if Spotify/Spotifast does not expose them thr
 
 Download the **complete Windows ZIP**, extract, and double-click `Install.bat`. Do not run the source script from inside a compressed ZIP. Install uses the current Windows user account and does not require Administrator.
 
-The player is accessible through the middle-right edge, the tray icon, or `Ctrl+Shift+Q`. Select themes and compact mode from the popup.
+The player is accessible through the middle-right edge, the tray icon, or `Ctrl+Shift+Q`. Select themes, compact mode, and Pin / Unpin from the popup. When unpinned it retracts after focus moves to another application; pinned stays visible.
 
 Run `Uninstall.bat` to remove the installed app and startup shortcut. `Restore-v1.2.4.bat` is included as an emergency fallback.
 
@@ -60,7 +60,7 @@ python3 install.py
 
 Open Plasma **Edit Mode → Add Widgets → Corner Media Player (Plasma 6)**. The applet requires Plasma 6 and at least one installed Spotify/Spotifast application. The installer refuses to modify any widget files if the prerequisite check fails.
 
-The Linux widget has a separate package ID from the original Emerald Vinyl, so the original is not removed or overwritten. You may remove the old widget manually after confirming the new one works.
+The Linux widget preserves its existing Corner Media Player plugin ID and saved settings during an in-place upgrade. New artwork display preference defaults to Vinyl. It has a separate package ID from the original Emerald Vinyl, so the original is not removed or overwritten. You may remove the old widget manually after confirming the new one works.
 
 ## Safe upgrades, including manually installed v1.2.4
 
@@ -97,7 +97,7 @@ python3 linux/plasma6/build-release.py
 
 Windows PowerShell 5.1 parsing, WPF XAML checks, ownership/migration fixtures, Linux Python tests, QML parsing, and ZIP integrity run in GitHub Actions. These checks do not substitute for running the interfaces on real desktops.
 
-The project does not manage Spotify accounts, send telemetry, or stream music independently. All music playback remains with Spotify or Spotifast. The program is unofficial and not affiliated with Spotify or KDE.
+The project does not manage Spotify accounts, send telemetry, or stream music independently. The Linux Artwork mode shows the original square media-session artwork without animation; Vinyl mode is a decorative drawing and does not embed album artwork. All music playback remains with Spotify or Spotifast. The program is unofficial and not affiliated with Spotify or KDE.
 
 
 ## License
