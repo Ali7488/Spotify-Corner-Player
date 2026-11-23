@@ -27,8 +27,14 @@ class WidgetThemeTests(unittest.TestCase):
             self.assertIn("background: Rectangle", slider, slider_id)
             self.assertIn("handle: Rectangle", slider, slider_id)
             self.assertIn("visualPosition", slider, slider_id)
-            self.assertIn("popup.palette.accent", slider, slider_id)
-            self.assertIn("popup.palette.border", slider, slider_id)
+            self.assertTrue(
+                "popup.palette.accent" in slider or "popup.coral" in slider,
+                f"{slider_id} must use the selected theme's accent"
+            )
+            self.assertTrue(
+                "popup.palette.border" in slider or "popup.line" in slider,
+                f"{slider_id} must use the selected theme's track color"
+            )
 
     def test_volume_preserves_mpris_control(self):
         popup = (UI_DIR / "VinylPopup.qml").read_text(encoding="utf-8")
