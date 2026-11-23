@@ -1,0 +1,17 @@
+# Local diagnostic and environment state
+*.log
+*.log.*
+install-report.txt
+.env
+.env.*
+!.env.example
+__pycache__/
+.DS_Store
+Thumbs.db
+
+# Generated Windows distribution artifacts
+/dist/
+
+# User-only deployment state, never source-controlled
+SpotifyCornerPlayer/
+*.backup-*
