@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a complete Windows v1.4.0 release ZIP from this checked-out repository.
+# Build a complete Windows v1.4.1 release ZIP from this checked-out repository.
 # The accepted v1.2.4 script is included for one-click rollback.
 set -Eeuo pipefail
 
@@ -28,18 +28,19 @@ names = (
     "Uninstall.bat",
     "Restore-v1.2.4.bat",
     "Setup.ps1",
-    "Spotify-Corner-Player-v1.4.0.ps1",
+    "Spotify-Corner-Player-v1.4.1.ps1",
     "Spotify-Corner-Player-v1.2.4.ps1",
     "Install-SpotifyPlayerLogs.ps1",
     "Spotify-Corner-Player-v1.2.3-rollback.ps1",
     "Spotify-Corner-Player-v1.2.0-rollback.ps1",
     "README.md",
+    "LICENSE",
 )
 missing = [name for name in names if not (root / name).is_file()]
 if missing:
     raise SystemExit("Missing release components: " + ", ".join(missing))
 
-source = (root / "Spotify-Corner-Player-v1.4.0.ps1").read_text(encoding="utf-8-sig")
+source = (root / "Spotify-Corner-Player-v1.4.1.ps1").read_text(encoding="utf-8-sig")
 if not all(marker in source for marker in (
     'x:Name="themeButton"',
     "Request-ThemeChange",
@@ -66,7 +67,7 @@ for theme in ("Forest", "Sapphire", "Amethyst", "Obsidian"):
     if {v.upper() for v in overrides} != {v.upper() for v in colors}:
         raise SystemExit(f"Incomplete/extra color entries: {theme}")
 
-output = root / "dist" / "Spotify-Corner-Player-v1.4.0-Windows.zip"
+output = root / "dist" / "Corner-Media-Player-v1.4.1-Windows.zip"
 output.parent.mkdir(parents=True, exist_ok=True)
 with ZipFile(output, "w", compression=ZIP_DEFLATED, compresslevel=9) as archive:
     for name in names:

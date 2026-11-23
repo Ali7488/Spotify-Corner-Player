@@ -1,8 +1,8 @@
-# Spotify Corner Player for KDE Plasma 6 (Linux)
+# Corner Media Player for KDE Plasma 6 (Linux)
 
-**Version 1.4.0 stable. One public repository, separate release ZIPs:**
-- `Spotify-Corner-Player-v1.4.0-Windows.zip`: Windows PowerShell/WPF implementation
-- `Spotify-Corner-Player-v1.4.0-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
+**Version 1.4.1 stable. One public repository, separate release ZIPs:**
+- `Corner-Media-Player-v1.4.1-Windows.zip`: Windows PowerShell/WPF implementation
+- `Corner-Media-Player-v1.4.1-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
 
 The Linux widget is based on the custom **Emerald Vinyl v1.0.3** widget. It is **not** a port of Windows WPF code. Both versions share the same five named visual themes and in-player theme selection, while each uses its native platform's media APIs.
 
@@ -24,7 +24,7 @@ An AppImage lying in Downloads is not enough for preflight. Install/integrate it
 Extract the Linux ZIP and run:
 
 ```bash
-cd Spotify-Corner-Player-Plasma6
+cd Corner-Media-Player-Plasma6
 python3 install.py --check
 python3 install.py
 ```
@@ -33,7 +33,7 @@ The installer **checks KDE Plasma 6 and installed Spotify/Spotifast before modif
 
 Installation is **per user** at `~/.local/share/plasma/plasmoids/org.mohannad.spotify.cornerplayer` (or `$XDG_DATA_HOME/plasma/plasmoids/...`). No sudo. Updates create an integrity-checked backup under `~/.local/state/spotify-corner-player/backups/` (or `$XDG_STATE_HOME`). A symlinked or unexpected target is refused.
 
-Open Plasma desktop/panel **Edit Mode → Add Widgets**, find **Spotify Corner Player (Plasma 6)**, and place it on the desired panel. If not found, log out and back in. The widget does not silently rewrite or restart panels on installation. It does not replace the existing Emerald Vinyl widget; remove that manually **only after the new one works**.
+Open Plasma desktop/panel **Edit Mode → Add Widgets**, find **Corner Media Player (Plasma 6)**, and place it on the desired panel. If not found, log out and back in. The widget does not silently rewrite or restart panels on installation. It does not replace the existing Emerald Vinyl widget; remove that manually **only after the new one works**.
 
 ## Change color or select media source without a terminal
 
@@ -62,7 +62,7 @@ Artwork-centered vinyl spins only while the selected MPRIS player reports playba
 
 ## Upgrade from manually installed or earlier versions
 
-The installer detects the existing applet by its **Plasma plugin ID**, not by how its ZIP was downloaded. It verifies that the existing package belongs to Spotify Corner Player, then backs it up before replacing it. KDE KConfig preferences remain intact. It refuses symlinked or unrelated installation paths.
+The installer detects the existing applet by its **Plasma plugin ID**, not by how its ZIP was downloaded. It verifies that the existing package belongs to Corner Media Player, then backs it up before replacing it. KDE KConfig preferences remain intact. It refuses symlinked or unrelated installation paths.
 
 The original Emerald Vinyl applet has a different plugin ID and is not automatically removed. Its own source and settings are intentionally preserved.
 
@@ -83,15 +83,15 @@ python3 -m unittest discover -s linux/plasma6/tests -v
 python3 linux/plasma6/build-release.py
 ```
 
-Output: `dist/Spotify-Corner-Player-v1.4.0-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
+Output: `dist/Corner-Media-Player-v1.4.1-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
 
 ```bash
-gh release upload 1.4.0 \
-  dist/Spotify-Corner-Player-v1.4.0-Plasma6.zip \
+gh release upload 1.4.1 \
+  dist/Corner-Media-Player-v1.4.1-Plasma6.zip \
   -R Ali7488/Spotify-Corner-Player
 ```
 
-v1.4.0 is confirmed working on CachyOS KDE Plasma 6. Other KDE Plasma 6 distributions should be tested individually. The existing v1.3.0 release remains available for rollback.
+v1.4.0 was confirmed working on CachyOS KDE Plasma 6. Other KDE Plasma 6 distributions should be tested individually. The existing v1.4.0 release remains available for rollback.
 
 ## Validation and limitations
 
@@ -102,3 +102,7 @@ Recommended tests: Spotify only installed; Spotifast only installed; both instal
 ## Source and credit
 
 This QML implementation derives from the MIT-labelled Emerald Vinyl v1.0.3 applet in the author's Development Vault and uses KDE Plasma 6's MPRIS integration. It is unofficial software, not affiliated with Spotify or KDE.
+
+## License
+
+This project is provided under the [MIT License](../../LICENSE), included in each Windows and Plasma 6 release ZIP. Spotify and Spotifast are independent applications and are not included.

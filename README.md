@@ -1,15 +1,15 @@
-# Spotify Corner Player
+# Corner Media Player
 
-A lightweight, unofficial Spotify music controller with two **native implementations** in one open-source repository.
+A lightweight desktop music controller with native implementations for Windows and KDE Plasma 6. It currently supports Spotify on Windows and Spotify or Spotifast on Plasma 6; it is not a general-purpose audio player.
 
-> **Current stable: [v1.4.0](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.0).** Verified working on Windows and CachyOS KDE Plasma 6, with automated platform checks. The previous [v1.3.0 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.3.0) remains available for rollback.
+> **Current stable: [v1.4.1](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.1).** Built on the verified v1.4.0 Windows and CachyOS KDE Plasma 6 releases, with updated naming and MIT licensing. The previous [v1.4.0 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.0) remains available for rollback.
 
 | Platform | Implementation | Media source |
 | --- | --- | --- |
 | Windows 10/11 | PowerShell 5.1, WPF, Windows media sessions | Spotify desktop |
 | KDE Plasma 6 | QML / Qt Quick, KDE Plasma and MPRIS | Spotify or Spotifast |
 
-The two versions are packaged as **separate ZIPs** under the same GitHub release. They are not one cross-platform binary, and there is no mandatory background web service.
+The two versions are packaged as **separate ZIPs**, each including an MIT license copy, under the same GitHub release. They are not one cross-platform binary, and there is no mandatory background web service.
 
 ## Features
 
@@ -48,7 +48,7 @@ python3 install.py --check
 python3 install.py
 ```
 
-Open Plasma **Edit Mode → Add Widgets → Spotify Corner Player (Plasma 6)**. The applet requires Plasma 6 and at least one installed Spotify/Spotifast application. The installer refuses to modify any widget files if the prerequisite check fails.
+Open Plasma **Edit Mode → Add Widgets → Corner Media Player (Plasma 6)**. The applet requires Plasma 6 and at least one installed Spotify/Spotifast application. The installer refuses to modify any widget files if the prerequisite check fails.
 
 The Linux widget has a separate package ID from the original Emerald Vinyl, so the original is not removed or overwritten. You may remove the old widget manually after confirming the new one works.
 
@@ -89,3 +89,7 @@ Windows PowerShell 5.1 parsing, WPF XAML checks, ownership/migration fixtures, L
 
 The project does not manage Spotify accounts, send telemetry, or stream music independently. All music playback remains with Spotify or Spotifast. The program is unofficial and not affiliated with Spotify or KDE.
 
+
+## License
+
+Licensed under the [MIT License](LICENSE). Copyright (c) 2026 Mohannad Ali. This license applies to this project's code, not to Spotify, Spotifast, or the media they play.
