@@ -1487,7 +1487,43 @@ function Start-CornerPlayer {
       <Border CornerRadius="7" Background="#503044" Height="14" Margin="3,0,3,8">
         <Slider x:Name="progress" Height="14" Minimum="0" Maximum="1000" Value="0"
                 IsMoveToPointEnabled="True" IsEnabled="False" Foreground="#D45D87" Background="#503044"
-                ToolTip="Seek (when supported)" AutomationProperties.Name="Playback position" />
+                ToolTip="Seek (when supported)" AutomationProperties.Name="Playback position">
+          <Slider.Template>
+            <ControlTemplate TargetType="{x:Type Slider}">
+              <Grid Background="Transparent" Height="14">
+                <Track x:Name="PART_Track" VerticalAlignment="Center" Height="14">
+                  <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+                      <RepeatButton.Template>
+                        <ControlTemplate TargetType="{x:Type RepeatButton}">
+                          <Border Background="#D45D87" Height="4" CornerRadius="2" />
+                        </ControlTemplate>
+                      </RepeatButton.Template>
+                    </RepeatButton>
+                  </Track.DecreaseRepeatButton>
+                  <Track.Thumb>
+                    <Thumb Width="12" Height="12">
+                      <Thumb.Template>
+                        <ControlTemplate TargetType="{x:Type Thumb}">
+                          <Ellipse Width="12" Height="12" Fill="#FFD9E7" Stroke="#800020" StrokeThickness="2" />
+                        </ControlTemplate>
+                      </Thumb.Template>
+                    </Thumb>
+                  </Track.Thumb>
+                  <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+                      <RepeatButton.Template>
+                        <ControlTemplate TargetType="{x:Type RepeatButton}">
+                          <Border Background="#503044" Height="4" CornerRadius="2" />
+                        </ControlTemplate>
+                      </RepeatButton.Template>
+                    </RepeatButton>
+                  </Track.IncreaseRepeatButton>
+                </Track>
+              </Grid>
+            </ControlTemplate>
+          </Slider.Template>
+        </Slider>
       </Border>
       <DockPanel x:Name="volumeRow" Height="30" Margin="3,0,3,8" LastChildFill="True" VerticalAlignment="Center">
         <Button x:Name="volumeMute" DockPanel.Dock="Left" Width="32" Height="26" Padding="0"
