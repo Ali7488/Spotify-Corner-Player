@@ -474,6 +474,27 @@ Rectangle {
                     id: recordStage
                     property real platterAngle: 0
                     property real spinStartAngle: 0
+                    // Additive rewind animation, independent of the continuous
+                    // forward spin. It only changes the visual rotation when
+                    // Previous is clicked, never the actual MPRIS playback.
+                    property real rewindOffset: 0
+                    function cuePrevious() {
+                        if (rewindCue.running)
+                            rewindCue.stop();
+                        rewindCue.from = rewindOffset;
+                        rewindCue.to = rewindOffset - 360;
+                        rewindCue.start();
+                    }
+                    NumberAnimation {
+                        id: rewindCue
+                        target: recordStage
+                        property: "rewindOffset"
+                        duration: 620
+                        easing.type: Easing.OutQuad
+                        // Modulo 360 keeps exact visual orientation while
+                        // preventing the offset growing on repeated clicks.
+                        onFinished: recordStage.rewindOffset = recordStage.rewindOffset % 360
+                    }
                     anchors.centerIn: parent
                     width: Math.min(parent.height, parent.width, 178)
                     height: width
@@ -493,7 +514,7 @@ Rectangle {
                         height: width
                         artwork: popup.previousCover
                         palette: popup.palette
-                        platterAngle: recordStage.platterAngle
+                        platterAngle: recordStage.platterAngle + recordStage.rewindOffset
                         visible: slide.running
                     }
                     Record {
@@ -502,7 +523,7 @@ Rectangle {
                         height: width
                         artwork: popup.currentCover
                         palette: popup.palette
-                        platterAngle: recordStage.platterAngle
+                        platterAngle: recordStage.platterAngle + recordStage.rewindOffset
                     }
                 }
             }
@@ -660,7 +681,14 @@ Rectangle {
                 symbol: "media-skip-backward"
                 Accessible.name: "Previous track"
                 enabled: media.player?.canGoPrevious ?? false
-                onClicked: media.player.Previous()
+                onClicked: {
+                    // Playback navigation already works. Rewind only the
+                    // record visual, then let the usual forward spin continue.
+                    if (media.player?.canGoPrevious) {
+                        recordStage.cuePrevious();
+                        media.player.Previous();
+                    }
+                }
             }
             PlayerButton {
                 Layout.fillWidth: true
