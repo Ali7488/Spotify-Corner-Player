@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   verify-windows:
-    if: contains(github.event.head_commit.message, '[release-stable-v1.4]')
+    if: contains(github.event.head_commit.message, '[release-stable-v1.4.1]')
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
         run: .\tests\windows\check-migration.ps1
 
   verify-plasma:
-    if: contains(github.event.head_commit.message, '[release-stable-v1.4]')
+    if: contains(github.event.head_commit.message, '[release-stable-v1.4.1]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
         run: python3 linux/plasma6/build-release.py
 
   publish-stable:
-    if: contains(github.event.head_commit.message, '[release-stable-v1.4]')
+    if: contains(github.event.head_commit.message, '[release-stable-v1.4.1]')
     needs: [verify-windows, verify-plasma]
     runs-on: ubuntu-latest
     permissions:
