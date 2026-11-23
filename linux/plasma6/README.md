@@ -1,8 +1,8 @@
 # Corner Media Player for KDE Plasma 6 (Linux)
 
-**Version 1.4.1 stable. One public repository, separate release ZIPs:**
-- `Corner-Media-Player-v1.4.1-Windows.zip`: Windows PowerShell/WPF implementation
-- `Corner-Media-Player-v1.4.1-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
+**Version 1.4.2 patch release. One public repository, separate release ZIPs:**
+- `Corner-Media-Player-v1.4.2-Windows.zip`: Windows PowerShell/WPF implementation
+- `Corner-Media-Player-v1.4.2-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
 
 The Linux widget is based on the custom **Emerald Vinyl v1.0.3** widget. It is **not** a port of Windows WPF code. Both versions share the same five named visual themes and in-player theme selection, while each uses its native platform's media APIs.
 
@@ -83,15 +83,15 @@ python3 -m unittest discover -s linux/plasma6/tests -v
 python3 linux/plasma6/build-release.py
 ```
 
-Output: `dist/Corner-Media-Player-v1.4.1-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
+Output: `dist/Corner-Media-Player-v1.4.2-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
 
 ```bash
-gh release upload 1.4.1 \
-  dist/Corner-Media-Player-v1.4.1-Plasma6.zip \
+gh release upload 1.4.2 \
+  dist/Corner-Media-Player-v1.4.2-Plasma6.zip \
   -R Ali7488/Spotify-Corner-Player
 ```
 
-v1.4.0 was confirmed working on CachyOS KDE Plasma 6. Other KDE Plasma 6 distributions should be tested individually. The existing v1.4.0 release remains available for rollback.
+v1.4.0 was confirmed working on CachyOS KDE Plasma 6. Other KDE Plasma 6 distributions should be tested individually. The v1.4.1 release remains available for rollback.
 
 ## Validation and limitations
 

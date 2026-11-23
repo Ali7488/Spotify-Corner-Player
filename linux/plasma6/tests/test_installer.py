@@ -119,7 +119,7 @@ class InstallerTests(unittest.TestCase):
                 self.assertIsNotNone(backup)
                 self.assertTrue(backup.is_dir())
                 self.assertEqual((backup / "metadata.json").read_bytes(), previous)
-                self.assertEqual(json.loads((target / "metadata.json").read_text())["KPlugin"]["Version"], "1.4.1")
+                self.assertEqual(json.loads((target / "metadata.json").read_text())["KPlugin"]["Version"], "1.4.2")
                 self.assertIsNone(installer.install_widget())
 
     def test_refuses_symlinked_target(self):

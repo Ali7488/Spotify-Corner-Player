@@ -1,9 +1,9 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    One-click setup and migration check for Corner Media Player v1.4.1.
+    One-click setup and migration check for Corner Media Player v1.4.2.
 .DESCRIPTION
-    Uses the v1.4.1 player with compact view, repeat and seeking based on the accepted v1.2.4 baseline. Invokes its own install
+    Uses the v1.4.2 player with compact view, repeat and seeking based on the accepted v1.2.4 baseline. Invokes its own install
     logic and the independently reversible Windows PowerShell logging helper.
     Must be run with Windows PowerShell 5.1 by Install.bat or Uninstall.bat.
 #>
@@ -24,7 +24,7 @@ try {
     }
 
     $root = Split-Path -Parent $PSCommandPath
-    $player = Join-Path $root 'Spotify-Corner-Player-v1.4.1.ps1'
+    $player = Join-Path $root 'Spotify-Corner-Player-v1.4.2.ps1'
     $helper = Join-Path $root 'Install-SpotifyPlayerLogs.ps1'
     $engine = Join-Path $PSHOME 'powershell.exe'
 
@@ -51,7 +51,7 @@ try {
         if ([Environment]::OSVersion.Version.Build -lt 17763) {
             throw 'Requires Windows 10 version 1809 or later, or Windows 11.'
         }
-        Write-Host 'Installing Corner Media Player v1.4.1 for the current Windows user...' -ForegroundColor Cyan
+        Write-Host 'Installing Corner Media Player v1.4.2 for the current Windows user...' -ForegroundColor Cyan
         & $engine -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File $player -Mode Install
         if ($LASTEXITCODE -ne 0) { throw "Player installer failed (exit code $LASTEXITCODE)." }
 

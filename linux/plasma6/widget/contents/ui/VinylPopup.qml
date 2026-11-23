@@ -605,6 +605,40 @@ Rectangle {
                 value: media.volumeAvailable ? Math.round(media.playerVolume * 100) : 0
                 Accessible.name: "Selected player's volume"
                 onMoved: media.setPlayerVolume(value / 100)
+
+                // QQC.Slider otherwise inherits the system's accent color
+                // (often teal), even when Corner Media Player is burgundy.
+                // Both elements bind to popup.palette, so theme switching
+                // recolors the control immediately without restarting Plasma.
+                background: Rectangle {
+                    x: volumeSlider.leftPadding
+                    y: (volumeSlider.height - height) / 2
+                    width: volumeSlider.availableWidth
+                    height: 5
+                    radius: height / 2
+                    color: popup.palette.border
+
+                    Rectangle {
+                        width: parent.width * volumeSlider.visualPosition
+                        height: parent.height
+                        radius: parent.radius
+                        color: popup.palette.accent
+                    }
+                }
+                handle: Rectangle {
+                    x: volumeSlider.leftPadding
+                       + volumeSlider.visualPosition * volumeSlider.availableWidth
+                       - width / 2
+                    y: (volumeSlider.height - height) / 2
+                    width: 14
+                    height: width
+                    radius: width / 2
+                    color: popup.palette.accent
+                    border.width: volumeSlider.activeFocus ? 2 : 1
+                    border.color: volumeSlider.activeFocus
+                        ? popup.palette.text : popup.palette.onAccent
+                    opacity: volumeSlider.enabled ? 1 : 0.45
+                }
             }
             QQC.Label {
                 Layout.preferredWidth: 38

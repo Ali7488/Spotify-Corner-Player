@@ -2,7 +2,7 @@
 
 A lightweight desktop music controller with native implementations for Windows and KDE Plasma 6. It currently supports Spotify on Windows and Spotify or Spotifast on Plasma 6; it is not a general-purpose audio player.
 
-> **Current stable: [v1.4.1](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.1).** Built on the verified v1.4.0 Windows and CachyOS KDE Plasma 6 releases, with updated naming and MIT licensing. The previous [v1.4.0 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.0) remains available for rollback.
+> **Current stable: [v1.4.2](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.2).** Fixes the KDE Plasma 6 volume slider styling so it follows the selected theme. The previous [v1.4.1 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.1) remains available for rollback.
 
 | Platform | Implementation | Media source |
 | --- | --- | --- |
