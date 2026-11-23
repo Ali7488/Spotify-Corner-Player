@@ -1,0 +1,112 @@
+name: Release Corner Media Player v1.5.0
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-windows:
+    if: contains(github.event.head_commit.message, '[release-stable-v1.5.0]')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Windows PowerShell and WPF for v1.5
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($name in @('Spotify-Corner-Player-v1.5.0.ps1', 'Setup.ps1', 'Spotify-Corner-Player-v1.2.4.ps1', 'Install-SpotifyPlayerLogs.ps1')) {
+            $tokens = $null
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $name), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) { throw "PowerShell parse error in $name : $($errors | Out-String)" }
+          }
+          $source = Get-Content 'Spotify-Corner-Player-v1.5.0.ps1' -Raw
+          $xaml = [regex]::Match($source, '(?s)<Window xmlns=.*?</Window>').Value
+          if (-not $xaml) { throw 'Player XAML missing' }
+          [xml]$doc = $xaml
+          foreach ($control in @('compactButton','repeatButton','progress','themeButton')) {
+            $nodes = $doc.SelectNodes('//*[@*[local-name()="Name"]]')
+            if (-not ($nodes | Where-Object { $_.GetAttribute('Name','http://schemas.microsoft.com/winfx/2006/xaml') -eq $control })) {
+              throw "Control missing: $control"
+            }
+          }
+          if (!$source.Contains('pinButton') -or !$source.Contains('Set-Pinned') -or !$source.Contains('Add_Deactivated') -or !$source.Contains('Get-ActiveMediaSession')) {
+            throw 'Windows v1.5.0 pin, click-away, or media-autodetection feature missing'
+          }
+      - name: Isolated manual v1.2.4 upgrade preflight
+        shell: powershell
+        run: .\tests\windows\check-migration.ps1
+      - name: Test Windows active-session and compact controls
+        shell: powershell
+        run: .\tests\windows\check-v1.5.0.ps1
+
+  verify-plasma:
+    if: contains(github.event.head_commit.message, '[release-stable-v1.5.0]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test safe Plasma 6 installs and upgrades
+        run: python3 -m unittest discover -s linux/plasma6/tests -v
+      - name: Parse Plasma 6 QML
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qt6-declarative-dev-tools
+          QMLFORMAT="$(command -v qmlformat || echo /usr/lib/qt6/bin/qmlformat)"
+          test -x "$QMLFORMAT"
+          for file in linux/plasma6/widget/contents/ui/*.qml; do
+            "$QMLFORMAT" "$file" >/dev/null
+          done
+      - name: Build and verify Linux ZIP
+        run: python3 linux/plasma6/build-release.py
+
+  publish-stable:
+    if: contains(github.event.head_commit.message, '[release-stable-v1.5.0]')
+    needs: [verify-windows, verify-plasma]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild both platform packages from validated main
+        run: |
+          bash Build-Release.sh
+          python3 linux/plasma6/build-release.py
+      - name: Verify both release assets
+        run: |
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          from pathlib import Path
+          for name, must in [
+            ("Corner-Media-Player-v1.5.0-Windows.zip", "Spotify-Corner-Player-v1.5.0.ps1"),
+            ("Corner-Media-Player-v1.5.0-Plasma6.zip", "Corner-Media-Player-Plasma6/widget/metadata.json"),
+          ]:
+            path = Path("dist") / name
+            assert path.is_file() and path.stat().st_size > 0, name
+            with ZipFile(path) as package:
+              assert package.testzip() is None, name
+              assert must in package.namelist(), (name, must)
+              license_path = "LICENSE" if "Windows" in name else "Corner-Media-Player-Plasma6/LICENSE"
+              assert license_path in package.namelist(), (name, "LICENSE absent")
+              assert b"MIT License" in package.read(license_path), (name, "invalid LICENSE")
+            print(f"Verified {name}: {path.stat().st_size} bytes")
+          PY
+      - name: Publish v1.5.0 stable, do not overwrite previous releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view 1.5.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Stable 1.5.0 already exists. Refusing to replace an existing release."
+            exit 1
+          fi
+          gh release create 1.5.0 \
+            dist/Corner-Media-Player-v1.5.0-Windows.zip \
+            dist/Corner-Media-Player-v1.5.0-Plasma6.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Corner Media Player v1.5.0" \
+            --notes-file docs/v1.5.0-release-notes.md \
+            --latest
