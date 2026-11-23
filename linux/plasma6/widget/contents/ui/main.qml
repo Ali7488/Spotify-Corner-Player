@@ -221,10 +221,11 @@ PlasmoidItem {
         }
     }
     fullRepresentation: Loader {
-        Layout.minimumWidth: 400
-        Layout.preferredWidth: 432
-        Layout.minimumHeight: compactMode ? 300 : 480
-        Layout.preferredHeight: compactMode ? 328 : 500
+        // Compact actually reduces popup geometry, not just the artwork.
+        Layout.minimumWidth: compactMode ? 240 : 400
+        Layout.preferredWidth: compactMode ? 276 : 432
+        Layout.minimumHeight: compactMode ? 96 : 480
+        Layout.preferredHeight: compactMode ? 104 : 500
         active: root.expanded
         sourceComponent: VinylPopup { media: root }
     }
