@@ -49,11 +49,15 @@ class WidgetThemeTests(unittest.TestCase):
         self.assertIn('property: "rewindOffset"', popup)
         self.assertIn("rewindCue.to = rewindOffset - 360", popup)
         self.assertIn("recordStage.rewindOffset = recordStage.rewindOffset % 360", popup)
-        # Both the incoming record and outgoing artwork must share the
-        # same visual angle to avoid a discontinuity during track changes.
+        # Only original decorative vinyl rotates; the album art stays square.
         self.assertEqual(
-            popup.count("platterAngle: recordStage.platterAngle + recordStage.rewindOffset"), 2
+            popup.count("platterAngle: recordStage.platterAngle + recordStage.rewindOffset"), 1
         )
+        record = (UI_DIR / "Record.qml").read_text(encoding="utf-8")
+        self.assertNotIn("artwork", record)
+        self.assertIn("fillMode: Image.PreserveAspectFit", popup)
+        self.assertIn('visible: media.artworkMode === "Artwork"', popup)
+        self.assertIn('running: recordStage.visible && media.playing && media.artworkMode === "Vinyl"', popup)
         previous = popup.split('Accessible.name: "Previous track"', 1)[1].split(
             "PlayerButton {", 1
         )[0]

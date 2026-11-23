@@ -23,78 +23,18 @@ Rectangle {
         "media-playback-pause": "M 7 4 H 12 V 24 H 7 Z M 16 4 H 21 V 24 H 16 Z",
         "media-skip-forward": "M 19 4 H 23 V 24 H 19 Z M 5 4 L 19 14 L 5 24 Z"
     })
-    readonly property string trackKey: JSON.stringify([media.track, media.artist, media.album])
     readonly property string lyricsUrl: media.track.trim()
         ? "https://www.google.com/search?q=" + encodeURIComponent([media.track.trim(), media.artist.trim(), "lyrics"].filter(Boolean).join(" "))
         : ""
     readonly property real position: media.player?.position ?? 0
     property string lyricsError: ""
-    property string currentKey: ""
-    property string recordAlbum: ""
-    property url currentCover: ""
-    property url previousCover: ""
-    property url pendingCover: ""
-    property bool pendingSlide: false
 
     function timeText(us) {
         const seconds = Math.max(0, Math.floor(us / 1000000));
         return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
     }
 
-    function syncTrack() {
-        media.player?.updatePosition();
-        const switched = currentKey !== trackKey && currentKey !== "";
-        currentKey = trackKey;
-        if (media.artwork && String(currentCover) !== media.artwork) {
-            pendingSlide = pendingSlide || switched || recordAlbum !== media.album;
-            pendingCover = media.artwork;
-            artworkTimeout.restart();
-            Qt.callLater(popup.finishArtwork, false);
-        } else if (!media.artwork && switched) {
-            // A player can update the title ahead of the next cover URL.
-            pendingSlide = true;
-            pendingCover = "";
-            artworkTimeout.restart();
-        } else if (switched) {
-            nudge.restart();
-        }
-    }
-
-    function finishArtwork(timedOut) {
-        if (!artworkTimeout.running && !timedOut)
-            return;
-        if (!timedOut && (!String(pendingCover) || preload.status === Image.Loading || preload.status === Image.Null))
-            return;
-        artworkTimeout.stop();
-        slide.stop();
-        incoming.x = 0;
-        outgoing.x = 0;
-        previousCover = currentCover;
-        currentCover = pendingCover;
-        recordAlbum = media.album;
-        if (pendingSlide)
-            slide.start();
-        pendingSlide = false;
-    }
-
-    onTrackKeyChanged: {
-        lyricsError = "";
-        syncDelay.restart();
-    }
-    Component.onCompleted: {
-        currentKey = trackKey;
-        recordAlbum = media.album;
-        currentCover = media.artwork;
-        media.player?.updatePosition();
-    }
-
-    Connections {
-        target: media
-        function onArtworkChanged() { syncDelay.restart(); }
-    }
-
-    Timer { id: syncDelay; interval: 125; onTriggered: popup.syncTrack() }
-    Timer { id: artworkTimeout; interval: 650; onTriggered: popup.finishArtwork(true) }
+    onLyricsUrlChanged: lyricsError = ""
     Timer {
         interval: 800
         repeat: true
@@ -102,32 +42,11 @@ Rectangle {
         onTriggered: media.player?.updatePosition()
     }
 
-    Image {
-        id: preload
-        visible: false
-        asynchronous: true
-        cache: true
-        sourceSize: Qt.size(320, 320)
-        source: popup.pendingCover
-        onStatusChanged: Qt.callLater(popup.finishArtwork, false)
-    }
-
-    ParallelAnimation {
-        id: slide
-        NumberAnimation { target: outgoing; property: "x"; from: 0; to: -180; duration: 245; easing.type: Easing.OutCubic }
-        NumberAnimation { target: outgoing; property: "opacity"; from: 1; to: 0; duration: 245 }
-        NumberAnimation { target: incoming; property: "x"; from: 180; to: 0; duration: 245; easing.type: Easing.OutCubic }
-    }
-    SequentialAnimation {
-        id: nudge
-        NumberAnimation { target: incoming; property: "rotation"; from: 0; to: 8; duration: 75 }
-        NumberAnimation { target: incoming; property: "rotation"; to: 0; duration: 125; easing.type: Easing.OutCubic }
-    }
-
     component PlayerButton: QQC.Button {
         id: button
         property string symbol: ""
         property bool accent: false
+        property bool small: false
         hoverEnabled: true
         opacity: enabled ? 1 : 0.48
         background: Rectangle {
@@ -159,7 +78,7 @@ Rectangle {
                 text: button.text
                 textFormat: Text.PlainText
                 color: button.accent ? popup.palette.onAccent : popup.cream
-                font.pixelSize: 13
+                font.pixelSize: button.small ? 10 : 13
                 font.weight: Font.DemiBold
             }
         }
@@ -395,11 +314,12 @@ Rectangle {
 
             PlayerButton {
                 objectName: "shuffleButton"
-                Layout.minimumWidth: 104
-                Layout.preferredHeight: 32
-                text: media.shuffleAvailable ? (media.shuffleOn ? "Shuffle on" : "Shuffle off") : "Shuffle"
+                Layout.preferredWidth: 66
+                Layout.preferredHeight: 26
+                small: true
+                text: media.shuffleOn ? "Shuffle ✓" : "Shuffle"
+                Accessible.name: media.shuffleOn ? "Disable shuffle" : "Enable shuffle"
                 enabled: media.shuffleAvailable
-                highlighted: media.shuffleOn
                 accent: media.shuffleOn
                 onClicked: media.toggleShuffle()
             }
@@ -407,30 +327,47 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 34
-            spacing: 8
+            Layout.preferredHeight: 27
+            spacing: 5
             PlayerButton {
                 objectName: "compactButton"
                 Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                text: media.compactMode ? "Expanded view" : "Compact view"
+                Layout.preferredHeight: 26
+                small: true
+                text: media.compactMode ? "Expand" : "Compact"
+                Accessible.name: media.compactMode ? "Expanded view" : "Compact view"
                 onClicked: media.toggleCompactMode()
             }
             PlayerButton {
                 objectName: "pinButton"
                 Layout.fillWidth: true
-                Layout.preferredHeight: 32
+                Layout.preferredHeight: 26
+                small: true
                 accent: media.pinned
-                text: media.pinned ? "Unpin" : "Pin open"
+                text: media.pinned ? "Unpin" : "Pin"
+                Accessible.name: media.pinned ? "Unpin player" : "Pin player open"
                 onClicked: media.togglePinned()
             }
             PlayerButton {
                 objectName: "repeatButton"
                 Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                text: media.repeatAvailable ? media.repeatLabel : "Repeat"
+                Layout.preferredHeight: 26
+                small: true
+                text: media.repeatAvailable ? (media.loopStatus === 2 ? "Repeat 1" : media.loopStatus === 1 ? "Repeat all" : "Repeat") : "Repeat"
+                Accessible.name: media.repeatLabel
                 enabled: media.repeatAvailable
                 onClicked: media.cycleRepeat()
+            }
+            PlayerButton {
+                objectName: "artworkButton"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 26
+                small: true
+                text: media.artworkMode === "Vinyl" ? "Vinyl" : "Artwork"
+                Accessible.name: "Switch between original artwork and spinning vinyl"
+                QQC.ToolTip.visible: hovered
+                QQC.ToolTip.text: "Display: " + media.artworkMode + ". Click to switch."
+                onClicked: media.toggleArtworkMode()
             }
         }
 
@@ -505,25 +442,30 @@ Rectangle {
                         to: recordStage.spinStartAngle + 360
                         duration: 12000
                         loops: Animation.Infinite
-                        running: recordStage.visible && media.playing
+                        running: recordStage.visible && media.playing && media.artworkMode === "Vinyl"
                         onStopped: recordStage.spinStartAngle = recordStage.platterAngle % 360
                     }
                     Record {
-                        id: outgoing
+                        id: vinylRecord
                         width: parent.width
                         height: width
-                        artwork: popup.previousCover
                         palette: popup.palette
                         platterAngle: recordStage.platterAngle + recordStage.rewindOffset
-                        visible: slide.running
+                        visible: media.artworkMode === "Vinyl"
                     }
-                    Record {
-                        id: incoming
+                    // Show the original cover square and still. No cropping, mask,
+                    // vinyl rotation, or animation is applied to third-party art.
+                    Image {
+                        id: originalArtwork
+                        anchors.centerIn: parent
                         width: parent.width
-                        height: width
-                        artwork: popup.currentCover
-                        palette: popup.palette
-                        platterAngle: recordStage.platterAngle + recordStage.rewindOffset
+                        height: parent.height
+                        source: media.artwork
+                        sourceSize: Qt.size(320, 320)
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        cache: true
+                        visible: media.artworkMode === "Artwork"
                     }
                 }
             }
