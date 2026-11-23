@@ -50,6 +50,9 @@ jobs:
               if (!$source.Contains($marker) -or !$legacy.Contains($marker)) { throw "Legacy migration marker mismatch: $marker" }
           }
           Write-Host 'PowerShell parsed; WPF controls, v1.2.4 marker, and no-Windows-pin rules validated.'
+      - name: Test manual legacy upgrade preflight
+        shell: powershell
+        run: .\\tests\\windows\\check-migration.ps1
       - name: Verify that 1.4 Setup selects 1.4 source
         shell: powershell
         run: |
