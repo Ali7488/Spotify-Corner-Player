@@ -38,6 +38,7 @@ $marker = Join-Path $installFolder '.owner'
 $reportFile = Join-Path $installFolder 'install-report.txt'
 $script:themeFile = Join-Path $installFolder 'theme.txt'
 $script:layoutFile = Join-Path $installFolder 'layout.txt'
+$script:pinFile = Join-Path $installFolder 'pin.txt'
 $script:scriptFilePath = $PSCommandPath
 $engine = Join-Path $PSHOME 'powershell.exe'
 $startupFolder = [Environment]::GetFolderPath('Startup')
@@ -343,6 +344,24 @@ function Set-CompactLayout([bool] $compact) {
     $script:compactButton.ToolTip = if ($compact) { 'Switch to expanded view' } else { 'Switch to compact view' }
     $script:compactButton.Content = if ($compact) { [char]0x25A3 } else { [char]0x25A5 }
     Write-PlayerLog 'INFO' 'Layout' $(if ($compact) { 'Compact view selected' } else { 'Expanded view selected' })
+}
+
+function Get-PinChoice {
+    try {
+        if ([IO.File]::Exists($script:pinFile)) {
+            return ([IO.File]::ReadAllText($script:pinFile).Trim() -eq 'Pinned')
+        }
+    } catch { Write-PlayerLog 'WARN' 'Pin' 'Could not read saved pin state.' }
+    return $false
+}
+
+function Set-Pinned([bool] $pinned) {
+    $script:pinned = $pinned
+    [IO.File]::WriteAllText($script:pinFile, $(if ($pinned) { 'Pinned' } else { 'Unpinned' }),
+        [Text.UTF8Encoding]::new($false))
+    $script:pinButton.Content = if ($pinned) { 'Unpin' } else { 'Pin' }
+    $script:pinButton.ToolTip = if ($pinned) { 'Unpin: close on click-away' } else { 'Pin: stay open on click-away' }
+    [System.Windows.Automation.AutomationProperties]::SetName($script:pinButton, $script:pinButton.ToolTip)
 }
 
 function Request-ThemeChange([string] $choice) {
@@ -1055,6 +1074,9 @@ function Show-Flyout {
     $script:attachedButton.ToolTip = 'Hide player'
     [System.Windows.Automation.AutomationProperties]::SetName($script:attachedButton, 'Hide player')
     if (!$script:flyout.IsVisible) { Update-CornerPosition; $script:flyout.Show() }
+    # Edge hover stays non-activating. Explicit opening activates the window
+    # so WPF Deactivated can distinguish a real click-away.
+    $null = $script:flyout.Activate()
     Animate-PanelIn
     # Opening does not start the record. Update-Media determines actual playback.
     Set-DiscMotion $false
@@ -1473,20 +1495,26 @@ function Start-CornerPlayer {
     <StackPanel>
       <DockPanel LastChildFill="True" Margin="2,0,0,12">
         <Button x:Name="close" DockPanel.Dock="Right" Content="&#215;" AutomationProperties.Name="Hide player"
-                Width="34" Height="32" Padding="0" Background="#39202D" />
-        <Button x:Name="repeatButton" DockPanel.Dock="Right" Content="Repeat" AutomationProperties.Name="Repeat mode"
-                ToolTip="Repeat (when supported)" IsEnabled="False" Width="65" Height="32"
-                Padding="0" Background="#39202D" Margin="2,3,2,3" FontSize="10" />
+                Width="28" Height="27" Padding="0" Background="#39202D" Margin="1" />
+        <Button x:Name="repeatButton" DockPanel.Dock="Right" Content="&#8635;" AutomationProperties.Name="Repeat mode"
+                ToolTip="Repeat (when supported)" IsEnabled="False" Width="27" Height="27"
+                Padding="0" Background="#39202D" Margin="1" FontSize="12" />
+        <Button x:Name="shuffleButton" DockPanel.Dock="Right" Content="&#8644;" AutomationProperties.Name="Shuffle mode"
+                ToolTip="Shuffle (when supported)" IsEnabled="False" Width="27" Height="27"
+                Padding="0" Background="#39202D" Margin="1" FontSize="13" />
+        <Button x:Name="pinButton" DockPanel.Dock="Right" Content="Pin" AutomationProperties.Name="Pin player open"
+                ToolTip="Pin player open" Width="33" Height="27" Padding="0"
+                Background="#39202D" Margin="1" FontSize="10" />
         <Button x:Name="compactButton" DockPanel.Dock="Right" Content="&#9635;" AutomationProperties.Name="Compact / expanded view"
-                ToolTip="Compact / expanded view" Width="34" Height="32" Padding="0"
-                Background="#39202D" Margin="2,3,2,3" FontSize="17" />
+                ToolTip="Compact / expanded view" Width="27" Height="27" Padding="0"
+                Background="#39202D" Margin="1" FontSize="13" />
         <Button x:Name="themeButton" DockPanel.Dock="Right" Content="&#9680;" AutomationProperties.Name="Choose color theme"
-                ToolTip="Choose color theme" Width="34" Height="32" Padding="0"
-                Background="#39202D" Margin="3,3,5,3" FontSize="17" />
+                ToolTip="Choose color theme" Width="27" Height="27" Padding="0"
+                Background="#39202D" Margin="1" FontSize="14" />
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
           <Ellipse Width="8" Height="8" Fill="#DF7399" Margin="0,0,9,0" />
           <StackPanel>
-            <TextBlock Text="SPOTIFY" Foreground="#F9EEF2" FontWeight="Bold" FontSize="12" />
+            <TextBlock x:Name="sourceName" Text="MEDIA" Foreground="#F9EEF2" FontWeight="Bold" FontSize="11" />
             <TextBlock Text="NOW PLAYING" Foreground="#C684A0" FontSize="10" Margin="0,2,0,0" />
           </StackPanel>
         </StackPanel>
@@ -1701,6 +1729,9 @@ function Start-CornerPlayer {
         $script:linksRow = $script:flyout.FindName('linksRow')
         $script:compactButton = $script:flyout.FindName('compactButton')
         $script:repeatButton = $script:flyout.FindName('repeatButton')
+        $script:shuffleButton = $script:flyout.FindName('shuffleButton')
+        $script:pinButton = $script:flyout.FindName('pinButton')
+        $script:sourceName = $script:flyout.FindName('sourceName')
         $script:seeking = $false
         $script:previous = $script:flyout.FindName('previous')
         $script:toggle = $script:flyout.FindName('toggle')
@@ -1712,6 +1743,7 @@ function Start-CornerPlayer {
         $script:attachedButton = $script:flyout.FindName('attachedButton')
         $script:themeButton = $script:flyout.FindName('themeButton')
         Set-CompactLayout (Get-LayoutChoice)
+        Set-Pinned (Get-PinChoice)
         $script:discMoving = $false
         $script:closing = $false
         $script:expanded = $false
@@ -1720,7 +1752,7 @@ function Start-CornerPlayer {
         $script:controlTask = $null
         $script:playerId = ''
         $script:nextMetadata = [DateTime]::MinValue
-        Reset-MediaPanel 'Spotify is closed or idle'
+        Reset-MediaPanel 'No media player is active'
         if (!$script:managerType) { $script:notice.Text = 'Windows media controls are unavailable.' }
 
         $script:exitTimer = New-DispatcherTimer 305
@@ -1775,6 +1807,14 @@ function Start-CornerPlayer {
         $script:flyout.Add_PreviewKeyDown({ param($source, $event)
             if ($event.Key -eq 'Escape') { Hide-Flyout; $event.Handled = $true }
         })
+        $script:flyout.Add_Deactivated({
+            # Do not close during a palette selection: ContextMenu is a
+            # separate popup and can momentarily deactivate its owner.
+            if ($script:expanded -and !$script:pinned -and !$script:closing -and
+                (!$script:themePicker -or !$script:themePicker.IsOpen)) {
+                Hide-Flyout
+            }
+        })
         $script:flyout.FindName('close').Add_Click({ Hide-Flyout })
         $script:attachedButton.Add_Click({ if ($script:expanded) { Hide-Flyout } else { Show-Flyout } })
         $script:flyout.FindName('openSpotify').Add_Click({ Open-Spotify })
@@ -1784,6 +1824,8 @@ function Start-CornerPlayer {
         $script:next.Add_Click({ Send-MediaControl 'next' })
         $script:compactButton.Add_Click({ Set-CompactLayout (!$script:compact) })
         $script:repeatButton.Add_Click({ Set-RepeatMode })
+        $script:shuffleButton.Add_Click({ Set-ShuffleMode })
+        $script:pinButton.Add_Click({ Set-Pinned (!$script:pinned) })
         $script:progress.Add_PreviewMouseLeftButtonDown({ $script:seeking = $true })
         $script:progress.Add_PreviewMouseLeftButtonUp({
             if ($script:seeking) { $script:seeking = $false; Invoke-SeekFromSlider }
