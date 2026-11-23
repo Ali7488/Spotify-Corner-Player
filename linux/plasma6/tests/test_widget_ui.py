@@ -54,7 +54,7 @@ class WidgetThemeTests(unittest.TestCase):
             popup.count("platterAngle: recordStage.platterAngle + recordStage.rewindOffset"), 1
         )
         record = (UI_DIR / "Record.qml").read_text(encoding="utf-8")
-        self.assertNotIn("artwork", record)
+        self.assertNotIn("Image {", record)
         self.assertIn("fillMode: Image.PreserveAspectFit", popup)
         self.assertIn('visible: media.artworkMode === "Artwork"', popup)
         self.assertIn('running: recordStage.visible && media.playing && media.artworkMode === "Vinyl"', popup)
