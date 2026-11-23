@@ -1,8 +1,8 @@
 # Corner Media Player for KDE Plasma 6 (Linux)
 
-**Version 1.5.0 stable. One public repository, separate release ZIPs:**
-- `Corner-Media-Player-v1.5.0-Windows.zip`: Windows PowerShell/WPF implementation
-- `Corner-Media-Player-v1.5.0-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
+**Version 1.5.1 stable. One public repository, separate release ZIPs:**
+- `Corner-Media-Player-v1.5.1-Windows.zip`: Windows PowerShell/WPF implementation
+- `Corner-Media-Player-v1.5.1-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
 
 The Linux widget is based on the custom **Emerald Vinyl v1.0.3** widget. It is **not** a port of Windows WPF code. Both versions share five visual themes while each uses its native platform's media APIs. The Linux widget provides a saved Artwork/Vinyl toggle: Artwork shows the original cover as a stationary, uncropped square; Vinyl spins a themed decorative record without embedding the album image.
 
@@ -84,11 +84,11 @@ python3 -m unittest discover -s linux/plasma6/tests -v
 python3 linux/plasma6/build-release.py
 ```
 
-Output: `dist/Corner-Media-Player-v1.5.0-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
+Output: `dist/Corner-Media-Player-v1.5.1-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
 
 ```bash
-gh release upload 1.5.0 \
-  dist/Corner-Media-Player-v1.5.0-Plasma6.zip \
+gh release upload 1.5.1 \
+  dist/Corner-Media-Player-v1.5.1-Plasma6.zip \
   -R Ali7488/Spotify-Corner-Player
 ```
 
@@ -107,3 +107,11 @@ This QML implementation derives from the MIT-labelled Emerald Vinyl v1.0.3 apple
 ## License
 
 This project is provided under the [MIT License](../../LICENSE), included in each Windows and Plasma 6 release ZIP. Spotify and Spotifast are independent applications and are not included.
+
+
+## v1.5.1: compact panel and hover-only icon hints
+
+- Compact mode now shows **only one elided track title, Previous / Play-Pause / Next, and a tiny Expand icon**. It hides album art, artist, source/theme menus, shuffle/repeat, pin, volume, seeking, lyrics, and notice text.
+- Expanded mode shows the original features, but Compact, Pin/Unpin, Repeat, Shuffle and Artwork/Vinyl are **28px icon buttons** with 450 ms delayed hover tooltips and accessible labels. The icons are drawn with built-in vector paths, independent of theme availability.
+- The real Plasma popup geometry collapses from roughly 432 × 500 to 276 × 104 (layout units, subject to panel scaling and decoration). The Expand button remains available so the user cannot get trapped in compact mode.
+- This is a Linux-only patch. The Windows 1.5.0 package and source remain unchanged.

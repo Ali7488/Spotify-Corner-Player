@@ -2,14 +2,14 @@
 
 A lightweight desktop music controller with native implementations for Windows and KDE Plasma 6. The display and playback controls work with an existing media application; Corner Media Player does not stream music. It currently supports active Windows media sessions on Windows and Spotify or Spotifast on Plasma 6; it is not a general-purpose audio player.
 
-> **Current stable: [v1.5.0](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.5.0).** Adds a Linux Artwork/Vinyl display toggle, smaller utility controls, and Windows pinning, click-away dismissal, shuffle, and active media-session auto-detection. The previous [v1.4.2 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.2) remains available for rollback.
+> **Latest: [v1.5.1 (Linux)](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.5.1).** Linux compact view is now title + transport controls only, with a small Expand button; expanded utility controls use 28px icons and hover tooltips. **Windows remains [v1.5.0](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.5.0)** with the same code and installer.
 
 | Platform | Implementation | Media source |
 | --- | --- | --- |
 | Windows 10/11 | PowerShell 5.1, WPF, Windows media sessions | Auto-detected active Windows media player (Spotify supported; other apps as exposed by Windows) |
 | KDE Plasma 6 | QML / Qt Quick, KDE Plasma and MPRIS | Spotify or Spotifast |
 
-The two versions are packaged as **separate ZIPs**, each including an MIT license copy, under the same GitHub release. They are not one cross-platform binary, and there is no mandatory background web service.
+The platform versions are packaged as **separate ZIPs**, each including an MIT license copy. The Linux-only v1.5.1 patch is a separate release; the Windows v1.5.0 ZIP remains available from its prior release. They are not one cross-platform binary, and there is no mandatory background web service.
 
 ## Screenshots
 
@@ -34,7 +34,7 @@ Both versions offer:
 
 **Windows:** right-edge drawer, tray menu, `Ctrl+Shift+Q`, a saved **Pin / Unpin** toggle (unpinned dismisses on click-away), smaller compact / pin / repeat / shuffle controls, and **active-media-session auto-detection**. Seeking, repeat and shuffle work only if supported by the selected Windows media session. Spotify-specific volume/mute is intentionally disabled when another player is selected. Windows does not display album artwork because its earlier thumbnail loading was unstable.
 
-**KDE Plasma 6:** a persistent display toggle between **stationary original square album artwork** and **spinning original-artwork-free vinyl**, smaller compact/pin/repeat/shuffle buttons, Spotify/Spotifast/Auto session selection, per-player MPRIS volume, and Pin open/Unpin. Auto follows the playing supported player. The original album cover is never cropped, masked, or rotated by this widget. See [Linux setup and compatibility notes](linux/plasma6/README.md).
+**KDE Plasma 6:** a true title-and-transport-only compact view (with a small Expand icon), 28px symbolic expanded utility actions with hover tooltips, and a persistent display toggle between **stationary original square album artwork** and **spinning original-artwork-free vinyl**, smaller compact/pin/repeat/shuffle buttons, Spotify/Spotifast/Auto session selection, per-player MPRIS volume, and Pin open/Unpin. Auto follows the playing supported player. The original album cover is never cropped, masked, or rotated by this widget. See [Linux setup and compatibility notes](linux/plasma6/README.md).
 
 Repeat, shuffle, seeking, and player selection may be limited by the capabilities exposed through operating-system media interfaces. The widget cannot force support that the player has not implemented.
 
@@ -53,7 +53,7 @@ Run `Uninstall.bat` to remove the installed app and startup shortcut. `Restore-v
 Download the **Plasma6 ZIP**, extract and run the installer under your normal desktop user:
 
 ```bash
-cd Spotify-Corner-Player-Plasma6
+cd Corner-Media-Player-Plasma6
 python3 install.py --check
 python3 install.py
 ```
