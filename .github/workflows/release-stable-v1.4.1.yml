@@ -94,10 +94,10 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view 1.4.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Stable 1.4.0 already exists. Refusing to replace an existing release."
+            echo "Stable 1.4.1 already exists. Refusing to replace an existing release."
             exit 1
           fi
-          gh release create 1.4.0 \
+          gh release create 1.4.1 \
             dist/Corner-Media-Player-v1.4.1-Windows.zip \
             dist/Corner-Media-Player-v1.4.1-Plasma6.zip \
             --repo "$GITHUB_REPOSITORY" \
