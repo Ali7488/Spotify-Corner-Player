@@ -396,6 +396,15 @@ function Get-ExistingInstallInfo {
 }
 
 function Assert-OwnedInstall {
+    # Migrates older manually run scripts only when their ownership is proven.
+    foreach ($path in @($installFolder, $installedScript, $marker, $startupLink)) {
+        if (Test-Path -LiteralPath $path) {
+            $entry = Get-Item -LiteralPath $path -Force
+            if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw "Refusing to modify a symlink or junction: $path"
+            }
+        }
+    }
     if ((Test-Path -LiteralPath $installFolder) -and
         (!(Test-Path -LiteralPath $marker -PathType Leaf) -or [IO.File]::ReadAllText($marker) -ne $signature)) {
         throw "An unrelated folder already exists at $installFolder."
@@ -490,7 +499,7 @@ function Install-CornerPlayer {
     }
     $null = New-Item -ItemType Directory -Force -Path $installFolder, $startupFolder
     [IO.File]::WriteAllText($marker, $signature)
-    Write-PlayerLog 'INFO' 'Install' 'Starting upgrade to v1.4.0 (vinyl-only player and corrected right-edge ribbon).'
+    Write-PlayerLog 'INFO' 'Install' 'Installing v1.4.0 with compact mode, seek and repeat controls.'
 
     $ready = [System.Threading.EventWaitHandle]::new($false, [System.Threading.EventResetMode]::ManualReset, $readyName)
     try {
@@ -512,7 +521,7 @@ function Install-CornerPlayer {
         @(
             'Spotify Corner Player v1.4.0'
             'Running for the current Windows user. Startup shortcut installed.'
-            'Five selectable themes, art-free spinning vinyl, animated edge drawer and symbol controls.'
+            'Five themes, compact/expanded views, seeking and repeat when supported.'
             'Hover at middle-right edge for Music; click to reveal flush player pushing tab offscreen.'
             'No full-player auto-popup. Mouse out hides the tiny tab after a moment.'
             'Ctrl+Shift+Q toggles the player if that key combination is available.'
@@ -523,12 +532,18 @@ function Install-CornerPlayer {
             "Startup shortcut: $startupLink"
             "Diagnostics: $logFile"
         ) | Set-Content -LiteralPath $reportFile -Encoding UTF8
-        Write-PlayerLog 'INFO' 'Install' 'Upgrade completed successfully.'
+        Write-PlayerLog 'INFO' 'Install' ("Upgrade completed from $oldVersion to v1.4.0.")
+        if ($oldVersion -ne 'none') {
+            Write-Output ("Previous owned version detected and replaced: $oldVersion")
+            if ($backupFolder) { Write-Output "Safe rollback backup: $backupFolder" }
+        }
     } catch {
         $failure = $_
         Write-PlayerLog 'ERROR' 'Install' ($failure.Exception.ToString())
         Stop-CornerPlayer
-        if (!$hadShortcut -and (Test-Path -LiteralPath $startupLink -PathType Leaf)) {
+        if ($hadShortcut -and $null -ne $oldShortcut) {
+            [IO.File]::WriteAllBytes($startupLink, [byte[]] $oldShortcut)
+        } elseif (Test-Path -LiteralPath $startupLink -PathType Leaf) {
             Remove-Item -LiteralPath $startupLink
         }
         if ($null -ne $previousScript) {
