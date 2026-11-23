@@ -10,6 +10,9 @@ on:
       - "linux/plasma6/**"
       - ".github/workflows/validate-plasma6.yml"
 
+permissions:
+  contents: write
+
 jobs:
   linux-plasma6:
     runs-on: ubuntu-latest
@@ -35,6 +38,17 @@ jobs:
           node --check /tmp/theme-colors.js
       - name: Build Linux ZIP and validate metadata/CRC
         run: python3 linux/plasma6/build-release.py
+      - name: Publish Linux preview alongside Windows v1.3.0 prerelease
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          prerelease="$(gh release view v1.3.0-rc.1 -R "$GITHUB_REPOSITORY" --json isPrerelease --jq '.isPrerelease')"
+          test "$prerelease" = true
+          gh release upload v1.3.0-rc.1 \
+            dist/Spotify-Corner-Player-v1.3.0-Plasma6.zip \
+            -R "$GITHUB_REPOSITORY" --clobber
       - name: Upload Linux preview ZIP
         uses: actions/upload-artifact@v4
         with:
