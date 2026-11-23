@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    One-click per-user installer/uninstaller for Spotify Corner Player v1.4.0 theme preview.
+    One-click setup and migration check for Spotify Corner Player v1.4.0.
 .DESCRIPTION
     Uses the v1.4.0 player with compact view, repeat and seeking based on the accepted v1.2.4 baseline. Invokes its own install
     logic and the independently reversible Windows PowerShell logging helper.
@@ -9,7 +9,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Install', 'Uninstall')]
+    [ValidateSet('Install', 'Uninstall', 'Check')]
     [string] $Mode = 'Install'
 )
 
@@ -40,6 +40,13 @@ try {
         }
     }
 
+    if ($Mode -eq 'Check') {
+        Write-Host 'Inspecting existing Spotify Corner Player installation...' -ForegroundColor Cyan
+        & $engine -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File $player -Mode Check
+        if ($LASTEXITCODE -ne 0) { throw 'Existing installation could not be safely identified.' }
+        Write-Host 'Read-only upgrade check complete.' -ForegroundColor Green
+        exit 0
+    }
     if ($Mode -eq 'Install') {
         if ([Environment]::OSVersion.Version.Build -lt 17763) {
             throw 'Requires Windows 10 version 1809 or later, or Windows 11.'
@@ -59,7 +66,7 @@ try {
         Write-Host ''
         Write-Host 'SUCCESS: Installed and launched, with startup at login.' -ForegroundColor Green
         Write-Host 'Use the Music tab at the middle-right edge, Ctrl+Shift+Q, or the tray icon.'
-        Write-Host 'Themes: Right-click the tray icon -> Color theme.'
+        Write-Host 'Themes: use the in-player color button (or tray menu). Compact mode: in-player toggle.'
         Write-Host 'Logs: %LOCALAPPDATA%\SpotifyCornerPlayer\Logs\player.log'
     }
     else {
