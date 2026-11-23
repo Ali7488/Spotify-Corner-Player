@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0">
+    <group name="General">
+        <entry name="themeId" type="String">
+            <default>Forest</default>
+        </entry>
+        <entry name="playerPreference" type="String">
+            <default>Auto</default>
+        </entry>
+    </group>
+</kcfg>
