@@ -1,0 +1,43 @@
+name: Validate KDE Plasma 6 co-release
+
+on:
+  push:
+    paths:
+      - "linux/plasma6/**"
+      - ".github/workflows/validate-plasma6.yml"
+  pull_request:
+    paths:
+      - "linux/plasma6/**"
+      - ".github/workflows/validate-plasma6.yml"
+
+jobs:
+  linux-plasma6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python sources
+        run: python3 -m compileall -q linux/plasma6
+      - name: Test preflight and user-only installation safely
+        run: python3 -m unittest discover -s linux/plasma6/tests -v
+      - name: Parse Plasma 6 QML markup
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qt6-declarative-dev-tools
+          QMLFORMAT="$(command -v qmlformat || true)"
+          if [ -z "$QMLFORMAT" ]; then QMLFORMAT="/usr/lib/qt6/bin/qmlformat"; fi
+          test -x "$QMLFORMAT"
+          for file in linux/plasma6/widget/contents/ui/*.qml; do
+            "$QMLFORMAT" "$file" > /dev/null
+          done
+      - name: Check JavaScript palette syntax
+        run: |
+          sed '/^\.pragma library$/d' linux/plasma6/widget/contents/ui/ThemeColors.js > /tmp/theme-colors.js
+          node --check /tmp/theme-colors.js
+      - name: Build Linux ZIP and validate metadata/CRC
+        run: python3 linux/plasma6/build-release.py
+      - name: Upload Linux preview ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Spotify-Corner-Player-v1.3.0-Plasma6-preview
+          path: dist/Spotify-Corner-Player-v1.3.0-Plasma6.zip
+          retention-days: 14
