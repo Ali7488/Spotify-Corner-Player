@@ -434,9 +434,6 @@ Rectangle {
                 font.pixelSize: 15
                 font.bold: true
                 elide: Text.ElideRight
-                QQC.ToolTip.visible: truncated && hovered
-                QQC.ToolTip.text: text
-                QQC.ToolTip.delay: 450
             }
             PlayerButton {
                 objectName: "expandCompactButton"
