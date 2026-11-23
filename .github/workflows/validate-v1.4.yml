@@ -107,3 +107,39 @@ jobs:
           name: Spotify-Corner-Player-v1.4.0-Plasma6-preview
           path: dist/Spotify-Corner-Player-v1.4.0-Plasma6.zip
           retention-days: 14
+
+  publish-preview:
+    name: Publish two-platform v1.4 prerelease
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/v1.4-usability-safe-upgrades' && contains(github.event.head_commit.message, '[release-rc]')
+    needs: [windows-check, windows-package, plasma6-check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild both validated assets
+        run: |
+          bash Build-Release.sh
+          python3 linux/plasma6/build-release.py
+      - name: Publish release candidate without replacing stable v1.3.0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag=v1.4.0-rc.1
+          if gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            test "$(gh release view "$tag" -R "$GITHUB_REPOSITORY" --json isPrerelease --jq '.isPrerelease')" = true
+            gh release upload "$tag" \
+              dist/Spotify-Corner-Player-v1.4.0-Windows.zip \
+              dist/Spotify-Corner-Player-v1.4.0-Plasma6.zip \
+              -R "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$tag" \
+              dist/Spotify-Corner-Player-v1.4.0-Windows.zip \
+              dist/Spotify-Corner-Player-v1.4.0-Plasma6.zip \
+              --title "Spotify Corner Player v1.4.0 RC1" \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --notes-file docs/v1.4-release-notes.md \
+              -R "$GITHUB_REPOSITORY"
+          fi
