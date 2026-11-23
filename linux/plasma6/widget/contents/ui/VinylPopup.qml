@@ -353,7 +353,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 26
                 small: true
-                text: media.repeatAvailable ? (media.loopStatus === 2 ? "Repeat 1" : media.loopStatus === 1 ? "Repeat all" : "Repeat") : "Repeat"
+                text: media.repeatAvailable ? (media.repeatLabel === "Repeat one" ? "Repeat 1" : media.repeatLabel === "Repeat all" ? "Repeat all" : "Repeat") : "Repeat"
                 Accessible.name: media.repeatLabel
                 enabled: media.repeatAvailable
                 onClicked: media.cycleRepeat()
