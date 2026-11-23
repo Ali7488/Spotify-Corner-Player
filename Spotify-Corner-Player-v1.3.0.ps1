@@ -13,7 +13,8 @@ powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\Spotify-Corner-Pl
 param(
     [ValidateSet('Install', 'Uninstall', 'Run', 'Restart')]
     [string] $Mode = 'Install',
-    [switch] $PurgeLogs
+    [switch] $PurgeLogs,
+    [switch] $ShowOnStart
 )
 
 Set-StrictMode -Version Latest
@@ -316,6 +317,29 @@ function Save-ThemeChoice([string] $choice) {
     [IO.File]::WriteAllText($script:themeFile, $choice, [Text.UTF8Encoding]::new($false))
 }
 
+
+function Request-ThemeChange([string] $choice) {
+    if ($choice -eq $script:activeTheme) { return }
+    try {
+        Save-ThemeChoice $choice
+        # Restart only this player; the original Spotify process is not touched.
+        # Remember whether the WPF panel was open, so the newly styled panel
+        # automatically reopens after the app-only refresh.
+        $restartArgs = '-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -Mode Restart' -f $script:scriptFilePath
+        if ($script:expanded) { $restartArgs += ' -ShowOnStart' }
+        $null = Start-Process -FilePath $engine -ArgumentList $restartArgs -WindowStyle Hidden -PassThru
+        if ($script:themeMenu) { $script:themeMenu.Enabled = $false }
+        if ($script:themeButton) { $script:themeButton.IsEnabled = $false }
+        Write-PlayerLog 'INFO' 'Theme' ("Theme change requested: " + $choice)
+    } catch {
+        Write-PlayerLog 'ERROR' 'Theme' $_.Exception.ToString()
+        [System.Windows.MessageBox]::Show(
+            'Could not switch theme. The current player remains running.',
+            'Spotify Corner Player'
+        ) | Out-Null
+    }
+}
+
 function Convert-ThemeMarkup([string] $markup, [string] $choice) {
     # For the known-working default, pass through the original XAML unchanged.
     if ($choice -eq 'Burgundy') { return $markup }
@@ -390,7 +414,9 @@ function Restart-CornerPlayer {
     )
     try {
         $null = $ready.Reset()
-        $null = Start-Process -FilePath $engine -ArgumentList $startupArgs -WindowStyle Hidden -PassThru
+        $argsToRun = $startupArgs
+        if ($ShowOnStart) { $argsToRun += ' -ShowOnStart' }
+        $null = Start-Process -FilePath $engine -ArgumentList $argsToRun -WindowStyle Hidden -PassThru
         if (!$ready.WaitOne(12000)) {
             throw 'Spotify Corner Player did not restart after changing theme.'
         }
@@ -1245,6 +1271,9 @@ function Start-CornerPlayer {
       <DockPanel LastChildFill="True" Margin="2,0,0,12">
         <Button x:Name="close" DockPanel.Dock="Right" Content="&#215;" AutomationProperties.Name="Hide player"
                 Width="34" Height="32" Padding="0" Background="#39202D" />
+        <Button x:Name="themeButton" DockPanel.Dock="Right" Content="&#9680;" AutomationProperties.Name="Choose color theme"
+                ToolTip="Choose color theme" Width="34" Height="32" Padding="0"
+                Background="#39202D" Margin="3,3,5,3" FontSize="17" />
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
           <Ellipse Width="8" Height="8" Fill="#DF7399" Margin="0,0,9,0" />
           <StackPanel>
@@ -1428,6 +1457,7 @@ function Start-CornerPlayer {
         $script:volumeSlider = $script:flyout.FindName('volumeSlider')
         $script:volumePercent = $script:flyout.FindName('volumePercent')
         $script:attachedButton = $script:flyout.FindName('attachedButton')
+        $script:themeButton = $script:flyout.FindName('themeButton')
         $script:discMoving = $false
         $script:closing = $false
         $script:expanded = $false
@@ -1499,6 +1529,56 @@ function Start-CornerPlayer {
         $script:toggle.Add_Click({ Send-MediaControl 'toggle' })
         $script:next.Add_Click({ Send-MediaControl 'next' })
 
+
+        # In-player palette chooser. The menu is attached to the existing header
+        # and does not change the 354 x 398 panel geometry or its edge animation.
+        $script:themePicker = [System.Windows.Controls.ContextMenu]::new()
+        $script:themePicker.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString(
+            $(if ($script:activeTheme -eq 'Burgundy') { '#341323' } else { $script:themeMaps[$script:activeTheme]['#341323'] })
+        )
+        $script:themePicker.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString(
+            $(if ($script:activeTheme -eq 'Burgundy') { '#FFF3F6' } else { $script:themeMaps[$script:activeTheme]['#FFF3F6'] })
+        )
+        $script:themePicker.BorderThickness = [System.Windows.Thickness]::new(1)
+        $brushFactory = [System.Windows.Media.BrushConverter]::new()
+        foreach ($themeId in @('Burgundy', 'Forest', 'Sapphire', 'Amethyst', 'Obsidian')) {
+            $themeChoice = [System.Windows.Controls.MenuItem]::new()
+            $themeChoice.Tag = $themeId
+            $themeChoice.IsCheckable = $true
+            $themeChoice.IsChecked = $themeId -eq $script:activeTheme
+            $themeChoice.ToolTip = [string] $script:themeNames[$themeId]
+
+            $swatches = [System.Windows.Controls.StackPanel]::new()
+            $swatches.Orientation = [System.Windows.Controls.Orientation]::Horizontal
+            $palette = $script:themeMaps[$themeId]
+            foreach ($sourceColor in @('#800020', '#DF7399')) {
+                $swatch = [System.Windows.Shapes.Ellipse]::new()
+                $swatch.Width = 11
+                $swatch.Height = 11
+                $swatch.Margin = [System.Windows.Thickness]::new(0,0,5,0)
+                $color = if ($themeId -eq 'Burgundy') { $sourceColor } else { [string] $palette[$sourceColor] }
+                $swatch.Fill = $brushFactory.ConvertFromString($color)
+                $null = $swatches.Children.Add($swatch)
+            }
+            $caption = [System.Windows.Controls.TextBlock]::new()
+            $caption.Text = [string] $script:themeNames[$themeId]
+            $caption.Foreground = $script:themePicker.Foreground
+            $caption.Margin = [System.Windows.Thickness]::new(5,0,0,0)
+            $null = $swatches.Children.Add($caption)
+            $themeChoice.Header = $swatches
+            $themeChoice.Add_Click({
+                param($sender, $eventArgs)
+                Request-ThemeChange ([string] $sender.Tag)
+            })
+            $null = $script:themePicker.Items.Add($themeChoice)
+        }
+        $script:themeButton.ContextMenu = $script:themePicker
+        $script:themeButton.Add_Click({
+            $script:themePicker.PlacementTarget = $script:themeButton
+            $script:themePicker.Placement = [System.Windows.Controls.Primitives.PlacementMode]::Bottom
+            $script:themePicker.IsOpen = $true
+        })
+
         $shortcutReady = $false
         try { $shortcutReady = Register-CornerShortcut } catch {}
         if (!$shortcutReady -and $script:managerType) {
@@ -1519,19 +1599,7 @@ function Start-CornerPlayer {
                 param($sender, $eventArgs)
                 $choice = [string] $sender.Tag
                 if ($choice -eq $script:activeTheme) { return }
-                try {
-                    Save-ThemeChoice $choice
-                    $restartArgs = '-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -Mode Restart' -f $script:scriptFilePath
-                    $null = Start-Process -FilePath $engine -ArgumentList $restartArgs -WindowStyle Hidden -PassThru
-                    $script:themeMenu.Enabled = $false
-                    Write-PlayerLog 'INFO' 'Theme' ("Theme change requested: " + $choice)
-                } catch {
-                    Write-PlayerLog 'ERROR' 'Theme' $_.Exception.ToString()
-                    [System.Windows.Forms.MessageBox]::Show(
-                        'Could not switch theme. Please exit and restart the player.',
-                        'Spotify Corner Player'
-                    ) | Out-Null
-                }
+                Request-ThemeChange $choice
             })
             $null = $script:themeMenu.DropDownItems.Add($themeItem)
         }
@@ -1572,6 +1640,15 @@ function Start-CornerPlayer {
         $script:lifecycle.Start()
         Write-PlayerLog 'INFO' 'Runtime' 'Single-window UI initialized and ready.'
         $null = $ready.Set()
+        if ($ShowOnStart) {
+            # A fresh theme opens the player again, without extra clicks.
+            $script:themeOpenTimer = New-DispatcherTimer 350
+            $script:themeOpenTimer.Add_Tick({
+                $script:themeOpenTimer.Stop()
+                Show-Flyout
+            })
+            $script:themeOpenTimer.Start()
+        }
         $null = $script:app.Run()
         Write-PlayerLog 'INFO' 'Runtime' 'Player exited normally.'
     } catch {
