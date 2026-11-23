@@ -700,7 +700,9 @@ function Reset-MediaPanel([string] $caption) {
     $script:durationTicks = 0
     $script:seekStartTicks = 0
     $script:repeatButton.IsEnabled = $false
-    $script:repeatButton.Content = 'Repeat'
+    $script:repeatButton.Content = [char]0x21BB
+    $script:shuffleButton.IsEnabled = $false
+    $script:shuffleButton.Content = [char]0x21C4
     $script:progress.Visibility = 'Collapsed'
     $script:previous.IsEnabled = $false
     $script:toggle.IsEnabled = $false
@@ -715,7 +717,7 @@ function Reset-MediaPanel([string] $caption) {
 
 # Deliberately use only the title/artist metadata. Spotify artwork is not requested.
 function Set-MediaText($media) {
-    $title = if ($media.Title) { [string] $media.Title } else { 'Spotify' }
+    $title = if ($media.Title) { [string] $media.Title } else { 'Unknown track' }
     $artist = if ($media.Artist) { [string] $media.Artist } else { '' }
     $key = '{0}|{1}|{2}' -f $title, $artist, $media.AlbumTitle
     if ($key -ne $script:trackKey) {
@@ -732,12 +734,38 @@ function Format-PlaybackTime([double] $seconds) {
     $interval.ToString('m\:ss')
 }
 
-function Get-SpotifySession {
-    foreach ($candidate in $script:manager.GetSessions()) {
-        if ($candidate.SourceAppUserModelId -match '^(Spotify(\.exe)?|SpotifyAB\.SpotifyMusic([^!]*)![^!]+)$') {
-            return $candidate
-        }
+function Get-MediaSessionLabel($session) {
+    $source = [string] $session.SourceAppUserModelId
+    if ($source -match '(?i)spotifast') { return 'SPOTIFAST' }
+    if ($source -match '(?i)spotify') { return 'SPOTIFY' }
+    if ($source -match '(?i)firefox') { return 'FIREFOX' }
+    if ($source -match '(?i)chrome') { return 'CHROME' }
+    if ($source -match '(?i)msedge') { return 'EDGE' }
+    $name = ($source -split '[!\\/]')[0] -replace '(?i)\.exe$', ''
+    if (!$name) { return 'MEDIA' }
+    return $name.Substring(0, [Math]::Min(18, $name.Length)).ToUpperInvariant()
+}
+
+# Select the active Windows media session, not just a Spotify AUMID. Keep
+# a paused selection stable; prefer Spotify if no player is playing.
+function Get-ActiveMediaSession {
+    if (!$script:manager) { return $null }
+    $sessions = @($script:manager.GetSessions())
+    if ($sessions.Count -eq 0) { return $null }
+    foreach ($session in $sessions) {
+        if ($session.SourceAppUserModelId -eq $script:playerId -and
+            "$($session.GetPlaybackInfo().PlaybackStatus)" -eq 'Playing') { return $session }
     }
+    foreach ($session in $sessions) {
+        if ("$($session.GetPlaybackInfo().PlaybackStatus)" -eq 'Playing') { return $session }
+    }
+    foreach ($session in $sessions) {
+        if ($session.SourceAppUserModelId -eq $script:playerId) { return $session }
+    }
+    foreach ($session in $sessions) {
+        if ($session.SourceAppUserModelId -match '(?i)spotify') { return $session }
+    }
+    return $sessions[0]
 }
 
 function Update-Media {
@@ -752,20 +780,22 @@ function Update-Media {
             $script:managerTask = $null
             $script:manager = $task.GetAwaiter().GetResult()
         }
-        $session = Get-SpotifySession
+        $session = Get-ActiveMediaSession
 
         if (!$session) {
             Set-DiscMotion $false
             if ($script:playerId -or $script:song.Text -ne 'Spotify is closed or idle') {
                 $script:playerId = ''
                 $script:controlTask = $null
-                Reset-MediaPanel 'Spotify is closed or idle'
+                $script:sourceName.Text = 'MEDIA'
+                Reset-MediaPanel 'No media player is active'
             }
             return
         }
 
         if ($script:playerId -ne $session.SourceAppUserModelId) {
-            Reset-MediaPanel 'Spotify'
+            $script:sourceName.Text = Get-MediaSessionLabel $session
+            Reset-MediaPanel ('Waiting for ' + $script:sourceName.Text)
             $script:playerId = $session.SourceAppUserModelId
             $script:nextMetadata = [DateTime]::MinValue
         }
@@ -777,13 +807,22 @@ function Update-Media {
         Set-DiscMotion ([bool] ($playing -and $script:expanded -and !$script:closing))
         $controls = $info.Controls
         $script:repeatButton.IsEnabled = [bool] $controls.IsRepeatEnabled
-        $script:repeatButton.Content = if ($controls.IsRepeatEnabled) {
-            switch ("$($info.AutoRepeatMode)") {
-                'Track' { 'Repeat one' }
-                'List' { 'Repeat all' }
-                default { 'Repeat off' }
-            }
-        } else { 'Repeat' }
+        $repeatLabel = switch ("$($info.AutoRepeatMode)") {
+            'Track' { 'Repeat one' }
+            'List' { 'Repeat all' }
+            default { 'Repeat off' }
+        }
+        $script:repeatButton.Content = if (!$controls.IsRepeatEnabled) { [char]0x21BB }
+            elseif ($repeatLabel -eq 'Repeat one') { '1' }
+            elseif ($repeatLabel -eq 'Repeat all') { [char]0x221E }
+            else { [char]0x21BB }
+        $script:repeatButton.ToolTip = if ($controls.IsRepeatEnabled) { $repeatLabel } else { 'Repeat unavailable' }
+        $script:shuffleButton.IsEnabled = [bool] $controls.IsShuffleEnabled
+        $script:shuffleActive = [bool] ($info.IsShuffleActive -eq $true)
+        $script:shuffleButton.Content = [char]0x21C4
+        $script:shuffleButton.Opacity = if ($script:shuffleActive) { 1.0 } else { 0.70 }
+        $script:shuffleButton.ToolTip = if (!$controls.IsShuffleEnabled) { 'Shuffle unavailable' }
+            elseif ($script:shuffleActive) { 'Disable shuffle' } else { 'Enable shuffle' }
         $script:previous.IsEnabled = $controls.IsPreviousEnabled
         $script:next.IsEnabled = $controls.IsNextEnabled
         $script:toggle.IsEnabled = $controls.IsPlayPauseToggleEnabled -or
@@ -825,7 +864,7 @@ function Update-Media {
             $task = $script:controlTask
             $script:controlTask = $null
             if (!$task.GetAwaiter().GetResult()) {
-                $script:notice.Text = 'Spotify did not accept that action.'
+                $script:notice.Text = 'Media player did not accept that action.'
             }
         }
     } catch {
@@ -833,20 +872,20 @@ function Update-Media {
         # Preserve existing song text when metadata is temporarily unavailable.
         Set-DiscMotion $false
         Write-MediaIssue 'Playback' $_.Exception.ToString()
-        $script:notice.Text = 'Spotify metadata briefly unavailable; see logs if it persists.'
+        $script:notice.Text = 'Media metadata temporarily unavailable; see logs if it persists.'
     }
 }
 
 function Invoke-SeekFromSlider {
     if (!$script:seekAvailable -or $script:durationTicks -le 0 -or $script:controlTask) { return }
     try {
-        $session = Get-SpotifySession
+        $session = Get-ActiveMediaSession
         if (!$session -or $session.SourceAppUserModelId -ne $script:playerId) { return }
         $fraction = [Math]::Max(0, [Math]::Min(1, $script:progress.Value / 1000.0))
         $ticks = [int64]($script:seekStartTicks + [Math]::Round($fraction * $script:durationTicks))
         $script:controlTask = New-MediaTask ($session.TryChangePlaybackPositionAsync($ticks)) ([bool])
     } catch {
-        $script:notice.Text = 'Spotify does not currently accept seeking.'
+        $script:notice.Text = 'The selected player does not accept seeking.'
         Write-MediaIssue 'Seek' $_.Exception.ToString()
     }
 }
@@ -854,7 +893,7 @@ function Invoke-SeekFromSlider {
 function Set-RepeatMode {
     if (!$script:manager -or $script:controlTask -or !$script:repeatButton.IsEnabled) { return }
     try {
-        $session = Get-SpotifySession
+        $session = Get-ActiveMediaSession
         if (!$session -or $session.SourceAppUserModelId -ne $script:playerId) { return }
         $current = "$($session.GetPlaybackInfo().AutoRepeatMode)"
         $value = switch ($current) { 'None' { 2 } 'List' { 1 } default { 0 } }
@@ -862,8 +901,21 @@ function Set-RepeatMode {
         $script:controlTask = New-MediaTask ($session.TryChangeAutoRepeatModeAsync([Enum]::ToObject($mode, $value))) ([bool])
     } catch {
         $script:repeatButton.IsEnabled = $false
-        $script:notice.Text = 'Spotify does not currently accept repeat changes.'
+        $script:notice.Text = 'The selected player does not accept repeat changes.'
         Write-MediaIssue 'Repeat' $_.Exception.ToString()
+    }
+}
+
+function Set-ShuffleMode {
+    if (!$script:manager -or $script:controlTask -or !$script:shuffleButton.IsEnabled) { return }
+    try {
+        $session = Get-ActiveMediaSession
+        if (!$session -or $session.SourceAppUserModelId -ne $script:playerId) { return }
+        $script:controlTask = New-MediaTask ($session.TryChangeShuffleActiveAsync(!$script:shuffleActive)) ([bool])
+    } catch {
+        $script:shuffleButton.IsEnabled = $false
+        $script:notice.Text = 'The selected media player does not accept shuffle changes.'
+        Write-MediaIssue 'Shuffle' $_.Exception.ToString()
     }
 }
 
@@ -871,7 +923,7 @@ function Send-MediaControl([string] $action) {
     if (!$script:manager -or $script:controlTask) { return }
     $script:notice.Text = ''
     try {
-        $session = Get-SpotifySession
+        $session = Get-ActiveMediaSession
         if (!$session -or $session.SourceAppUserModelId -ne $script:playerId) { return }
         $operation = switch ($action) {
             'previous' { $session.TrySkipPreviousAsync() }
@@ -890,7 +942,7 @@ function Send-MediaControl([string] $action) {
         $script:controlTask = New-MediaTask $operation ([bool])
     } catch {
         Write-PlayerLog 'ERROR' 'Control' $_.Exception.ToString()
-        $script:notice.Text = 'Spotify did not accept that action.'
+        $script:notice.Text = 'Media player did not accept that action.'
     }
 }
 
@@ -1242,6 +1294,14 @@ function Initialize-SpotifyVolume {
 }
 
 function Update-SpotifyVolumeUI {
+    # Core Audio volume targets Spotify's process only, never another
+    # auto-selected player such as Firefox or Spotifast.
+    if ($script:playerId -notmatch '(?i)spotify') {
+        $script:volumeMute.IsEnabled = $false
+        $script:volumeSlider.IsEnabled = $false
+        $script:volumePercent.Text = 'N/A'
+        return
+    }
     if (!$script:volumeReady -or $script:volumePending -or $script:volumeSlider.IsMouseCaptureWithin) { return }
     try {
         $snapshot = [SpotifyCornerPlayer.SpotifyVolume]::Get()
