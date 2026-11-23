@@ -167,8 +167,8 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 10
+        anchors.margins: media.compactMode ? 14 : 20
+        spacing: media.compactMode ? 7 : 10
 
         RowLayout {
             Layout.fillWidth: true
@@ -407,8 +407,63 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: 148
+            Layout.preferredHeight: 34
+            spacing: 8
+            PlayerButton {
+                objectName: "compactButton"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 32
+                text: media.compactMode ? "Expanded view" : "Compact view"
+                onClicked: media.toggleCompactMode()
+            }
+            PlayerButton {
+                objectName: "pinButton"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 32
+                accent: media.pinned
+                text: media.pinned ? "Unpin" : "Pin open"
+                onClicked: media.togglePinned()
+            }
+            PlayerButton {
+                objectName: "repeatButton"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 32
+                text: media.repeatAvailable ? media.repeatLabel : "Repeat"
+                enabled: media.repeatAvailable
+                onClicked: media.cycleRepeat()
+            }
+        }
+
+        // Compact mode keeps title, artist, progress, and transport accessible.
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: media.compactMode ? 48 : 0
+            visible: media.compactMode
+            spacing: 2
+            QQC.Label {
+                Layout.fillWidth: true
+                text: media.track || "No track playing"
+                textFormat: Text.PlainText
+                color: popup.cream
+                font.pixelSize: 17
+                font.bold: true
+                elide: Text.ElideRight
+            }
+            QQC.Label {
+                Layout.fillWidth: true
+                text: media.artist || media.sourceLabel
+                textFormat: Text.PlainText
+                color: popup.muted
+                font.pixelSize: 12
+                elide: Text.ElideRight
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: !media.compactMode
+            Layout.minimumHeight: media.compactMode ? 0 : 148
+            visible: !media.compactMode
             spacing: 19
 
             Item {
@@ -532,6 +587,36 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.preferredHeight: 34
+            spacing: 8
+            QQC.Label {
+                text: "VOL"
+                color: popup.muted
+                font.pixelSize: 11
+            }
+            QQC.Slider {
+                id: volumeSlider
+                objectName: "volumeSlider"
+                Layout.fillWidth: true
+                from: 0
+                to: 100
+                enabled: media.volumeAvailable
+                live: false
+                value: media.volumeAvailable ? Math.round(media.playerVolume * 100) : 0
+                Accessible.name: "Selected player's volume"
+                onMoved: media.setPlayerVolume(value / 100)
+            }
+            QQC.Label {
+                Layout.preferredWidth: 38
+                horizontalAlignment: Text.AlignRight
+                color: popup.muted
+                text: media.volumeAvailable ? (Math.round(media.playerVolume * 100) + "%") : "N/A"
+                font.pixelSize: 11
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
             spacing: 8
 
             PlayerButton {
@@ -566,6 +651,7 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
+            visible: !media.compactMode
             spacing: 8
             PlayerButton {
                 Layout.fillWidth: true
