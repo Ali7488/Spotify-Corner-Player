@@ -2,10 +2,10 @@
   "KPackageStructure": "Plasma/Applet",
   "KPlugin": {
     "Id": "org.mohannad.spotify.cornerplayer",
-    "Name": "Spotify Corner Player (Plasma 6)",
-    "Description": "A themed music panel for Spotify or Spotifast using MPRIS",
+    "Name": "Corner Media Player (Plasma 6)",
+    "Description": "Compact customizable music controls for Spotify and Spotifast via MPRIS",
     "Icon": "media-optical-audio",
-    "Version": "1.4.0",
+    "Version": "1.4.1",
     "License": "MIT",
     "Category": "Multimedia"
   },
