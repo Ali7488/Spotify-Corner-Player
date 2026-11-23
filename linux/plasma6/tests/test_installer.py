@@ -99,6 +99,29 @@ class InstallerTests(unittest.TestCase):
                 self.assertFalse(target.exists())
                 self.assertTrue(original.is_dir())
 
+    def test_update_replaces_owned_previous_version_with_backup(self):
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            data = home / "data"
+            state = home / "state"
+            with mock.patch.dict(os.environ, {
+                "XDG_DATA_HOME": str(data),
+                "XDG_STATE_HOME": str(state),
+            }):
+                self.assertIsNone(installer.install_widget())
+                target = installer.installation_directory()
+                # Emulate a different *owned* version installed manually.
+                manifest = json.loads((target / "metadata.json").read_text())
+                manifest["KPlugin"]["Version"] = "1.3.0"
+                (target / "metadata.json").write_text(json.dumps(manifest))
+                previous = (target / "metadata.json").read_bytes()
+                backup = installer.install_widget()
+                self.assertIsNotNone(backup)
+                self.assertTrue(backup.is_dir())
+                self.assertEqual((backup / "metadata.json").read_bytes(), previous)
+                self.assertEqual(json.loads((target / "metadata.json").read_text())["KPlugin"]["Version"], "1.4.0")
+                self.assertIsNone(installer.install_widget())
+
     def test_refuses_symlinked_target(self):
         with tempfile.TemporaryDirectory() as temp:
             home = Path(temp)
