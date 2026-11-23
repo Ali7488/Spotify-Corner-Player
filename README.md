@@ -1,82 +1,63 @@
 # Spotify Corner Player for Windows
 
-A small, per-user Windows PowerShell 5.1 / WPF player for the **Spotify desktop application**.
+**Latest test candidate: v1.3.0** | **Known working release: v1.2.4**
 
-**Known working baseline: v1.2.4** (confirmed on a Windows laptop on November 22, 2026). The original player script is archived unchanged. The new `Install.bat` and `Setup.ps1` only automate installation; they do not redesign the UI.
+Windows PowerShell 5.1 / WPF mini-player for the Spotify desktop app. The existing Music drawer stays on the middle-right edge of the primary display. v1.3.0 adds five theme presets with contrasting accents and a selector **inside the player**. The original WPF playback logic and panel positioning remain based on v1.2.4.
 
-## Install on another Windows computer
+## Install (Windows 10 1809+ or Windows 11)
 
-1. Download the **complete Windows release ZIP** or this repository's ZIP after source assembly.
-2. In File Explorer, right-click the ZIP and select **Extract All**.
-3. Open the extracted folder and **double-click `Install.bat`**.
-4. Read the status in the terminal window. No admin rights or developer tools are required.
-5. Open the regular Spotify desktop app and play music. The Music tab is at the **middle-right edge of the primary monitor**; click it to reveal the player toward the left.
+1. Download the **complete v1.3.0 Windows ZIP** from the release asset, or build it using `Build-Release.sh`.
+2. Extract the ZIP using File Explorer's **Extract All**.
+3. Double-click `Install.bat` in the extracted folder.
+4. Hover at the **middle-right screen edge**, then click **Music** to open the player. Use the regular Windows desktop Spotify app.
 
-Windows SmartScreen or other security software may flag an unsigned custom script. Only run code from a trusted source and review it if prompted. This package uses per-invocation `-ExecutionPolicy Bypass`; it does not change your system-wide PowerShell policy.
+The installer requires no administrator access. It installs per Windows user, starts the player, and registers login startup. No PowerShell commands need to be pasted.
 
-## Controls
+## Theme settings inside the player
 
-- Middle-right Music tab, or `Ctrl+Shift+Q`, or tray icon.
-- Previous / play-pause / next track.
-- Spotify-only audio-session volume and mute (does not change system volume).
-- Vinyl animation follows Spotify's *Playing* state, and stops on pause.
-- Song metadata/progress if available from Windows Media sessions.
-- Lyrics opens a browser search.
-- Sign-in startup shortcut and private, rotated logs.
-- No Spotify API token, Node.js or Python needed.
+Click the **◐ palette button** next to the close **×** control. A popup shows all five themes, two color swatches per theme, and a checkmark next to the active one. Choose a theme from the list. It saves to `%LOCALAPPDATA%\SpotifyCornerPlayer\theme.txt`, refreshes only the player process, and reopens the drawer if it was already expanded. No terminal is necessary.
 
-Album artwork retrieval is **intentionally removed** from v1.2.4 due to previously observed errors. Do not advertise artwork support.
+| Theme | Primary palette | Contrast |
+| --- | --- | --- |
+| Burgundy Rose | Deep burgundy, rose pink | Original palette unchanged |
+| Emerald Forest | Dark emerald, mint | **Coral** accents |
+| Midnight Sapphire | Navy, royal blue, icy blue | Cool blue accents, unchanged |
+| Royal Amethyst | Plum and lavender | **Gold** accents |
+| Obsidian Gold | Charcoal and muted gold | **Purple** accents |
 
-## Uninstall
+The tray icon also offers the same **Color theme** menu. Theme choice persists after signing out or restarting. Changing it does not restart Spotify or Windows.
 
-Double-click `Uninstall.bat`. The app and its startup shortcut are removed, as well as the optional PowerShell `spotifyPlayerLogs` helper. Logs are retained for diagnostics. No system-wide modification is performed.
+## Features retained from v1.2.4
 
-## Diagnostics
+- Music tab animated from middle-right edge, drawer expands left, `Ctrl+Shift+Q` toggle and tray controls.
+- Previous/next/play/pause; Spotify-only Windows audio-session volume and mute (not system volume).
+- Song and playback progress metadata when Windows makes it available.
+- Vinyl spins only when Spotify is playing. Pausing freezes it.
+- Lyrics button opens a search in the default browser.
+- Bounded local logs, login startup and one-click uninstall.
+- **No album artwork loading**. It was deliberately removed from stable v1.2.4.
 
-Open **Windows PowerShell 5.1** after installation and run `spotifyPlayerLogs -Tail 80`, or view `%LOCALAPPDATA%\SpotifyCornerPlayer\Logs\player.log`.
+## Uninstall and recovery
 
-If the optional log helper fails, the player may already be installed; the setup window explicitly reports this partial success.
+- `Uninstall.bat` removes the installed player, startup shortcut and the optional PowerShell diagnostic helper. Logs remain for debugging.
+- `Restore-v1.2.4.bat` installs the *known-working* v1.2.4 version if you encounter a regression. v1.2.4 ignores the saved theme.
+- Diagnostics: `%LOCALAPPDATA%\SpotifyCornerPlayer\Logs\player.log`. In PowerShell 5.1, the optional `spotifyPlayerLogs -Tail 80` command opens the latest errors.
 
-## Manual commands
+Windows SmartScreen may warn about an unsigned custom installer. Run the ZIP only from a trusted repository. The launcher uses execution policy bypass for its child PowerShell process only; no machine-wide policy change.
 
-```powershell
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File '.\Spotify-Corner-Player-v1.2.4.ps1' -Mode Install
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File '.\Spotify-Corner-Player-v1.2.4.ps1' -Mode Uninstall
-```
-
-## Release layout
-
-- `Install.bat`: user-facing double-click launcher.
-- `Uninstall.bat`: user-facing removal launcher.
-- `Setup.ps1`: preflight parser checks, then calls the verified player's built-in installer and diagnostic helper.
-- `Spotify-Corner-Player-v1.2.4.ps1`: original accepted working player, untouched.
-- `Install-SpotifyPlayerLogs.ps1`: optional diagnostic profile function, reversible.
-- `Spotify-Corner-Player-v1.2.3-rollback.ps1`: historical rollback candidate.
-- `Spotify-Corner-Player-v1.2.0-rollback.ps1`: historical pre-regression fallback.
-
-All original source files are from the private `Ali7488/pharm` canonical archive. Their Git blob SHA-1 values are pinned in `Build-Local-Project.sh` so assembly will stop if the archive changes unexpectedly. The GitHub repository should contain source code, not logs or user machine data.
-
-## Maintainer: create the full project and Windows ZIP from the private archive
-
-From a Linux machine authenticated with the GitHub CLI (`gh auth status`):
+## Build and publish the complete Windows ZIP from Linux
 
 ```bash
-bash ./Build-Local-Project.sh
+git switch feature/v1.3.0-color-themes
+bash ./Build-Release.sh
 ```
 
-This populates `~/projects/PersonalProjects/Spotify-Corner-Player` and creates `dist/Spotify-Corner-Player-v1.2.4-Windows.zip` with everything needed for Windows. It runs Git blob verification, creates a clean local Git repository if needed, and does **not** push or publish anything. Run it only from this bootstrap directory.
+Output: `dist/Spotify-Corner-Player-v1.3.0-Windows.zip`. This ZIP contains the v1.3.0 player, known working v1.2.4 script, both older rollback candidates, log helper, install/uninstall/restore launchers, setup wrapper, and README.
 
-After inspecting the project in Linux:
+The `Build-Release.sh` command validates the pinned v1.2.4 source, WPF XAML well-formedness, theme-button presence, palette coverage and ZIP CRC. It does **not** publish a release; the `dist/` directory is ignored by Git. Attach the ZIP as a GitHub Release asset only after Windows testing. `Build-Local-Project.sh` is retained as an alias to the newer release builder.
 
-```bash
-cd ~/projects/PersonalProjects/Spotify-Corner-Player
-git add .
-git commit -m "Import Spotify Corner Player v1.2.4 with one-click Windows setup"
-gh repo create Spotify-Corner-Player --private --source . --remote origin --push
-```
+## Testing status
 
-The final command creates the remote, so do not use it if the remote repository already exists. You can later attach the `dist/*.zip` release file via `gh release create v1.2.4 dist/Spotify-Corner-Player-v1.2.4-Windows.zip --title 'Spotify Corner Player v1.2.4'`.
+Stable v1.2.4 was confirmed working on Windows on November 22, 2026. The themed v1.3.0 branch is **not yet tested on Windows**, so it remains a test candidate rather than replacing the published stable release.
 
-## Testing
-
-Static packaging and Bash checks do not prove WPF/window/COM behavior. Verify on a Windows test machine: installer launch, middle-right tab behavior, vinyl pausing, Spotify audio session controls, lyrics link, startup after sign-in, uninstall, and log-helper command. Keep v1.2.4 as the stable baseline until new runtime tests pass.
+Windows acceptance checklist: install; reveal middle-right Music tab; click palette button and switch among all 5 themes; verify emerald/coral, purple/gold and gold/purple contrast accents; confirm auto-reopen and persistence across login; exercise Spotify controls, volume, vinyl and keyboard shortcut; test `Restore-v1.2.4.bat` and `Uninstall.bat`.
