@@ -1,0 +1,39 @@
+name: Sync Corner Media Player v1.4.3 screenshots to release notes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "media/Corner-Media-Player-Windows.png"
+      - "media/Corner-Media-Player-KDE-Plasma-6.png"
+      - "docs/v1.4.3-release-notes.md"
+      - ".github/workflows/sync-v1.4.3-release-images.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-release-description:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify collages and preserve existing installer archives
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -s media/Corner-Media-Player-Windows.png
+          test -s media/Corner-Media-Player-KDE-Plasma-6.png
+          file media/Corner-Media-Player-*.png
+          test "$(gh release view 1.4.3 -R "$GITHUB_REPOSITORY" --json assets --jq '.assets | length')" = 2
+      - name: Edit existing v1.4.3 description only
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release edit 1.4.3 -R "$GITHUB_REPOSITORY" --notes-file docs/v1.4.3-release-notes.md
+          gh release view 1.4.3 -R "$GITHUB_REPOSITORY" --json body --jq '.body' > /tmp/v1.4.3-body.md
+          grep -F 'media/Corner-Media-Player-Windows.png' /tmp/v1.4.3-body.md
+          grep -F 'media/Corner-Media-Player-KDE-Plasma-6.png' /tmp/v1.4.3-body.md
+          test "$(gh release view 1.4.3 -R "$GITHUB_REPOSITORY" --json assets --jq '.assets | length')" = 2
+          echo 'Updated existing release notes; both original ZIPs preserved.'
