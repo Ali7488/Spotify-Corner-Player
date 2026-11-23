@@ -5,7 +5,7 @@
     "Name": "Corner Media Player (Plasma 6)",
     "Description": "Compact customizable music controls for Spotify and Spotifast via MPRIS",
     "Icon": "media-optical-audio",
-    "Version": "1.4.1",
+    "Version": "1.4.2",
     "License": "MIT",
     "Category": "Multimedia"
   },
