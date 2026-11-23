@@ -132,7 +132,7 @@ PlasmoidItem {
     Mpris.Mpris2Model { id: media }
     Instantiator {
         model: media
-        delegate: QtObject {
+        delegate: Item {
             required property var container
             required property string identity
             required property string desktopEntry
