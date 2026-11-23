@@ -89,4 +89,3 @@ Windows PowerShell 5.1 parsing, WPF XAML checks, ownership/migration fixtures, L
 
 The project does not manage Spotify accounts, send telemetry, or stream music independently. All music playback remains with Spotify or Spotifast. The program is unofficial and not affiliated with Spotify or KDE.
 
-This is a public personal utility project, **not a résumé or portfolio project**.
