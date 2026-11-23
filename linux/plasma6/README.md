@@ -6,7 +6,6 @@
 
 The Linux widget is based on the custom **Emerald Vinyl v1.0.3** widget. It is **not** a port of Windows WPF code. Both versions share the same five named visual themes and in-player theme selection, while each uses its native platform's media APIs.
 
-This is a public hobby utility, **not a resume or portfolio project**. Do not add it to career claims or resume inventories.
 
 ## Requirements
 
