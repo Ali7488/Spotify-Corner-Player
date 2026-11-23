@@ -11,7 +11,7 @@ powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\Spotify-Corner-Pl
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Install', 'Uninstall', 'Run', 'Restart')]
+    [ValidateSet('Install', 'Uninstall', 'Run', 'Restart', 'Check')]
     [string] $Mode = 'Install',
     [switch] $PurgeLogs,
     [switch] $ShowOnStart
@@ -421,6 +421,20 @@ function Assert-OwnedInstall {
         if (!$targetOk -or !$argsOk) {
             throw "Unrecognized startup shortcut at $startupLink. Refusing to remove or overwrite it."
         }
+    }
+}
+
+function Check-CornerPlayer {
+    # Read-only diagnostic; never attempts to remove or launch another process.
+    Assert-OwnedInstall
+    $existing = Get-ExistingInstallInfo
+    if ($existing -eq 'none') {
+        Write-Output 'No previous owned Spotify Corner Player script found.'
+    } else {
+        Write-Output ("Previous Spotify Corner Player detected: " + $existing)
+        Write-Output ("Install location: " + $installedScript)
+        Write-Output 'Upgrade is eligible: existing ownership and startup identity verified.'
+        Write-Output 'Installing v1.4.0 will stop the old instance, back it up, and replace it in place.'
     }
 }
 
@@ -1818,4 +1832,5 @@ switch ($Mode) {
     'Uninstall' { Uninstall-CornerPlayer }
     'Run' { Start-CornerPlayer }
     'Restart' { Restart-CornerPlayer }
+    'Check' { Check-CornerPlayer }
 }
