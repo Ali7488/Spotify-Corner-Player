@@ -1,4 +1,21 @@
-# Spotify Corner Player for Windows
+# Spotify Corner Player
+
+An unofficial, public Spotify/Spotifast music widget project with **two native implementations** in one repository.
+
+| Platform | Implementation | Download/build |
+| --- | --- | --- |
+| Windows 10/11 | Windows PowerShell 5.1 + WPF | [Windows releases](https://github.com/Ali7488/Spotify-Corner-Player/releases) and `Install.bat` |
+| **KDE Plasma 6 (Linux)** | Qt Quick / QML Plasma widget + MPRIS | [Linux setup guide](linux/plasma6/README.md) and `linux/plasma6/build-release.py` |
+
+**Linux preflight:** the installer checks KDE Plasma 6 and whether **Spotify and/or Spotifast is installed** *before* installing anything. If neither app is installed, setup exits without making changes. Both implementations offer five themes: Burgundy Rose, Emerald Forest + Coral, Midnight Sapphire, Royal Amethyst + Gold, and Obsidian Gold + Purple. The Linux widget adds a source selector (Auto / Spotify / Spotifast) and stores both settings through KDE KConfig.
+
+This is a public **personal utility / hobby project, not a résumé or portfolio project**. Neither platform's code should be presented as a professional experience claim.
+
+The Linux applet is packaged separately and does **not** replace your current Emerald Vinyl applet without you explicitly doing so. Both implementations should be treated as previews until platform-specific UI testing passes.
+
+---
+
+## Windows Spotify Corner Player
 
 A small, per-user Windows PowerShell 5.1 / WPF player for the **Spotify desktop application**.
 
