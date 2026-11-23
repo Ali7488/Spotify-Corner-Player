@@ -11,6 +11,16 @@ A lightweight desktop music controller with native implementations for Windows a
 
 The two versions are packaged as **separate ZIPs**, each including an MIT license copy, under the same GitHub release. They are not one cross-platform binary, and there is no mandatory background web service.
 
+## Screenshots
+
+### Windows
+
+![Corner Media Player running on Windows](https://raw.githubusercontent.com/Ali7488/Spotify-Corner-Player/main/media/Corner-Media-Player-Windows.png)
+
+### KDE Plasma 6
+
+![Corner Media Player KDE Plasma 6 themes](https://raw.githubusercontent.com/Ali7488/Spotify-Corner-Player/main/media/Corner-Media-Player-KDE-Plasma-6.png)
+
 ## Features
 
 Both versions offer:
