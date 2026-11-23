@@ -195,7 +195,7 @@ PlasmoidItem {
 
     preferredRepresentation: compactRepresentation
     Plasmoid.icon: "media-optical-audio"
-    toolTipMainText: track || "Spotify Corner Player"
+    toolTipMainText: track || "Corner Media Player"
     toolTipSubText: artist || sourceLabel
     toolTipTextFormat: Text.PlainText
 
@@ -204,7 +204,7 @@ PlasmoidItem {
         Layout.minimumHeight: 26
         implicitWidth: 34
         implicitHeight: 34
-        Accessible.name: "Open Spotify Corner Player"
+        Accessible.name: "Open Corner Media Player"
         onClicked: root.expanded = !root.expanded
         background: Rectangle {
             radius: width / 2
