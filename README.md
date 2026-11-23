@@ -2,7 +2,7 @@
 
 A lightweight, unofficial Spotify music controller with two **native implementations** in one open-source repository.
 
-> v1.4.0 is a **preview** until runtime tests are completed on Windows and KDE Plasma 6. The existing [v1.3.0 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.3.0) remains the stable release.
+> **Current stable: [v1.4.0](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.4.0).** Verified working on Windows and CachyOS KDE Plasma 6, with automated platform checks. The previous [v1.3.0 release](https://github.com/Ali7488/Spotify-Corner-Player/releases/tag/1.3.0) remains available for rollback.
 
 | Platform | Implementation | Media source |
 | --- | --- | --- |
