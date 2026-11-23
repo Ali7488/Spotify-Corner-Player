@@ -1,6 +1,6 @@
-# Spotify Corner Player for KDE Plasma 6 (Linux preview)
+# Spotify Corner Player for KDE Plasma 6 (Linux)
 
-**Version 1.4 preview. One public repository, separate release ZIPs:**
+**Version 1.4.0 stable. One public repository, separate release ZIPs:**
 - `Spotify-Corner-Player-v1.4.0-Windows.zip`: Windows PowerShell/WPF implementation
 - `Spotify-Corner-Player-v1.4.0-Plasma6.zip`: KDE Plasma 6 / Qt Quick implementation
 
@@ -87,12 +87,12 @@ python3 linux/plasma6/build-release.py
 Output: `dist/Spotify-Corner-Player-v1.4.0-Plasma6.zip`. Attach it to the **same** GitHub Release as the corresponding Windows ZIP, with a separate asset filename. This is a co-release of two independent implementations, not one cross-platform binary:
 
 ```bash
-gh release upload v1.4.0-rc.1 \
+gh release upload 1.4.0 \
   dist/Spotify-Corner-Player-v1.4.0-Plasma6.zip \
   -R Ali7488/Spotify-Corner-Player
 ```
 
-v1.4 is a release candidate until tested on real Plasma 6 systems. The existing v1.3.0 stable release remains available for rollback.
+v1.4.0 is confirmed working on CachyOS KDE Plasma 6. Other KDE Plasma 6 distributions should be tested individually. The existing v1.3.0 release remains available for rollback.
 
 ## Validation and limitations
 
