@@ -74,6 +74,37 @@ class WidgetThemeTests(unittest.TestCase):
         self.assertIn("loops: Animation.Infinite", popup)
 
 
+    def test_compact_mode_hides_nonessential_rows(self):
+        popup = (UI_DIR / "VinylPopup.qml").read_text(encoding="utf-8")
+        main = (UI_DIR / "main.qml").read_text(encoding="utf-8")
+        self.assertIn('objectName: "compactTitleRow"', popup)
+        self.assertIn('objectName: "compactTrackTitle"', popup)
+        self.assertIn('objectName: "expandCompactButton"', popup)
+        self.assertIn('objectName: "transportRow"', popup)
+        self.assertIn('visible: media.compactMode', popup)
+        self.assertGreaterEqual(popup.count('visible: !media.compactMode'), 6)
+        self.assertNotIn('Compact mode keeps title, artist, progress', popup)
+        self.assertIn('Layout.preferredHeight: compactMode ? 104 : 500', main)
+        self.assertIn('Layout.preferredWidth: compactMode ? 276 : 432', main)
+        self.assertIn('Layout.preferredHeight: media.compactMode ? 37 : 48', popup)
+
+    def test_small_symbolic_controls_with_hover_tooltips(self):
+        popup = (UI_DIR / "VinylPopup.qml").read_text(encoding="utf-8")
+        self.assertIn('readonly property var utilityPaths', popup)
+        self.assertIn('QQC.ToolTip.visible: button.hovered && button.hint.length > 0', popup)
+        self.assertIn('QQC.ToolTip.delay: 450', popup)
+        for name in ('shuffleButton', 'pinButton', 'compactButton',
+                     'repeatButton', 'artworkButton', 'expandCompactButton'):
+            block = popup.split('objectName: "' + name + '"', 1)[1].split(
+                '\n            }', 1
+            )[0]
+            self.assertIn('small: true', block, name)
+            self.assertIn('outlineSymbol: true', block, name)
+            self.assertIn('Layout.preferredWidth: 28', block, name)
+            self.assertIn('hint:', block, name)
+            self.assertIn('Accessible.name: hint', block, name)
+        self.assertIn('symbol: media.artworkMode === "Vinyl" ? "artwork" : "vinyl"', popup)
+        self.assertIn('symbol: media.pinned ? "unpin" : "pin"', popup)
 
 
 if __name__ == "__main__":
