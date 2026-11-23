@@ -568,6 +568,15 @@ function Install-CornerPlayer {
         if (!$hadInstall) {
             Remove-Item -LiteralPath $reportFile -ErrorAction SilentlyContinue
             # Keep the ownership marker with failure logs for safe reinstall and diagnosis.
+        } elseif ($null -ne $previousScript) {
+            # The old source and startup link were restored. Relaunch the
+            # previously working app rather than leaving a failed upgrade offline.
+            try {
+                $null = Start-Process -FilePath $engine -ArgumentList $startupArgs -WindowStyle Hidden -PassThru
+                Write-PlayerLog 'WARN' 'Upgrade' 'Old player restarted following v1.4 install failure.'
+            } catch {
+                Write-PlayerLog 'ERROR' 'Upgrade' ('Could not restart previous player: ' + $_.Exception.Message)
+            }
         }
         throw $failure
     } finally {
