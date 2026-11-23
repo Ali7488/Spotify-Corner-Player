@@ -40,9 +40,10 @@ jobs:
           foreach ($entry in @{compactButton='Button';repeatButton='Button';progress='Slider';recordRow='Grid';volumeRow='DockPanel';linksRow='UniformGrid';themeButton='Button'}.GetEnumerator()) {
               if ($names[$entry.Key] -ne $entry.Value) { throw "Missing $($entry.Key) as $($entry.Value)" }
           }
-          foreach ($required in @('Set-CompactLayout','TryChangePlaybackPositionAsync','TryChangeAutoRepeatModeAsync','Get-ExistingInstallInfo','Assert-OwnedInstall','Backups\','Restore')) {
+          foreach ($required in @('Set-CompactLayout','TryChangePlaybackPositionAsync','TryChangeAutoRepeatModeAsync','Get-ExistingInstallInfo','Assert-OwnedInstall','Backups\')) {
               if (!$source.Contains($required)) { throw "Required feature missing: $required" }
           }
+          if (!(Test-Path 'Restore-v1.2.4.bat')) { throw 'Rollback launcher missing' }
           if ($source.Contains('pinButton') -or $source.Contains('Set-Pinned')) { throw 'Windows pinning explicitly excluded from v1.4' }
           $legacy = Get-Content 'Spotify-Corner-Player-v1.2.4.ps1' -Raw
           foreach ($marker in @("SpotifyCornerPlayer/1", "Spotify-Corner-Player.ps1", "Spotify Corner Player.lnk")) {
