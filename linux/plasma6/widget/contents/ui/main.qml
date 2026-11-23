@@ -14,6 +14,20 @@ PlasmoidItem {
     readonly property string themeId: Plasmoid.configuration.themeId || "Forest"
     readonly property string playerPreference: Plasmoid.configuration.playerPreference || "Auto"
 
+    // Native KDE Plasma 6 popup pinning, Linux only.
+    hideOnWindowDeactivate: !pinned
+    readonly property bool compactMode: Plasmoid.configuration.compactMode ?? false
+    readonly property bool pinned: Plasmoid.configuration.pinned ?? false
+
+    function toggleCompactMode() {
+        Plasmoid.configuration.compactMode = !compactMode;
+    }
+    function togglePinned() {
+        Plasmoid.configuration.pinned = !pinned;
+        if (Plasmoid.configuration.pinned)
+            expanded = true;
+    }
+
     property var player: null
     property var players: []
     property string activeSource: ""
@@ -32,6 +46,30 @@ PlasmoidItem {
                                            ? playerPreference : activeSource
     readonly property bool spotifyRunning: players.some(probe => sourceKey(probe) === "Spotify")
     readonly property bool spotifastRunning: players.some(probe => sourceKey(probe) === "Spotifast")
+    // KDE libkmpris exposes MPRIS repeat and normalized player volume.
+    readonly property int loopStatus: player?.loopStatus ?? -1
+    readonly property bool repeatAvailable: Boolean(player?.canControl)
+        && (loopStatus === Mpris.LoopStatus.None
+            || loopStatus === Mpris.LoopStatus.Playlist
+            || loopStatus === Mpris.LoopStatus.Track)
+    readonly property string repeatLabel: loopStatus === Mpris.LoopStatus.Playlist
+        ? "Repeat all" : loopStatus === Mpris.LoopStatus.Track
+            ? "Repeat one" : "Repeat off"
+    readonly property real playerVolume: player?.volume ?? NaN
+    readonly property bool volumeAvailable: Boolean(player?.canControl)
+        && Number.isFinite(playerVolume) && playerVolume >= 0 && playerVolume <= 1
+    function cycleRepeat() {
+        if (!repeatAvailable) return;
+        player.loopStatus = loopStatus === Mpris.LoopStatus.None
+            ? Mpris.LoopStatus.Playlist
+            : loopStatus === Mpris.LoopStatus.Playlist
+                ? Mpris.LoopStatus.Track : Mpris.LoopStatus.None;
+    }
+    function setPlayerVolume(value) {
+        if (!volumeAvailable || !Number.isFinite(value)) return;
+        player.volume = Math.max(0, Math.min(1, value));
+    }
+
     readonly property int shuffleStatus: player?.shuffle ?? Mpris.ShuffleStatus.Unknown
     readonly property bool shuffleOn: shuffleStatus === Mpris.ShuffleStatus.On
     readonly property bool shuffleAvailable: (player?.canControl ?? false)
@@ -180,8 +218,8 @@ PlasmoidItem {
     fullRepresentation: Loader {
         Layout.minimumWidth: 400
         Layout.preferredWidth: 432
-        Layout.minimumHeight: 360
-        Layout.preferredHeight: 376
+        Layout.minimumHeight: compactMode ? 300 : 415
+        Layout.preferredHeight: compactMode ? 328 : 450
         active: root.expanded
         sourceComponent: VinylPopup { media: root }
     }
