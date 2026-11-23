@@ -1,0 +1,82 @@
+name: Release Corner Media Player v1.5.1 (Linux compact icons)
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-plasma:
+    if: contains(github.event.head_commit.message, '[release-stable-v1.5.1]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Python and run Linux widget regression tests
+        run: |
+          python3 -m compileall -q linux/plasma6
+          python3 -m unittest discover -s linux/plasma6/tests -v
+      - name: Parse Plasma 6 QML
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qt6-declarative-dev-tools
+          QMLFORMAT="$(command -v qmlformat || echo /usr/lib/qt6/bin/qmlformat)"
+          test -x "$QMLFORMAT"
+          for file in linux/plasma6/widget/contents/ui/*.qml; do
+            "$QMLFORMAT" "$file" >/dev/null
+          done
+      - name: Check palette, package and metadata
+        run: |
+          sed '/^\.pragma library$/d' linux/plasma6/widget/contents/ui/ThemeColors.js > /tmp/theme-colors.js
+          node --check /tmp/theme-colors.js
+          python3 linux/plasma6/build-release.py
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import json
+          package = Path("dist/Corner-Media-Player-v1.5.1-Plasma6.zip")
+          assert package.is_file() and package.stat().st_size > 0
+          with ZipFile(package) as z:
+              assert z.testzip() is None
+              root = "Corner-Media-Player-Plasma6/"
+              assert root+"LICENSE" in z.namelist()
+              assert b"MIT License" in z.read(root+"LICENSE")
+              meta = json.loads(z.read(root+"widget/metadata.json"))
+              assert meta["KPlugin"]["Version"] == "1.5.1"
+              assert meta["KPlugin"]["Id"] == "org.mohannad.spotify.cornerplayer"
+              main = z.read(root+"widget/contents/ui/main.qml").decode()
+              popup = z.read(root+"widget/contents/ui/VinylPopup.qml").decode()
+              assert 'Layout.preferredHeight: compactMode ? 104 : 500' in main
+              assert 'objectName: "compactTitleRow"' in popup
+              assert 'objectName: "expandCompactButton"' in popup
+              assert 'QQC.ToolTip.visible: button.hovered && button.hint.length > 0' in popup
+          print("Validated Linux 1.5.1 package:", package.stat().st_size, "bytes")
+          PY
+
+  publish-linux:
+    if: contains(github.event.head_commit.message, '[release-stable-v1.5.1]')
+    needs: verify-plasma
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild validated Linux patch package
+        run: python3 linux/plasma6/build-release.py
+      - name: Publish Linux-only v1.5.1 release without overwriting v1.5.0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view 1.5.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Stable 1.5.1 already exists; refusing to replace it."
+            exit 1
+          fi
+          gh release create 1.5.1 \
+            dist/Corner-Media-Player-v1.5.1-Plasma6.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Corner Media Player v1.5.1 (Linux)" \
+            --notes-file docs/v1.5.1-release-notes.md \
+            --latest
