@@ -1,9 +1,9 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    One-click setup and migration check for Spotify Corner Player v1.4.0.
+    One-click setup and migration check for Corner Media Player v1.4.1.
 .DESCRIPTION
-    Uses the v1.4.0 player with compact view, repeat and seeking based on the accepted v1.2.4 baseline. Invokes its own install
+    Uses the v1.4.1 player with compact view, repeat and seeking based on the accepted v1.2.4 baseline. Invokes its own install
     logic and the independently reversible Windows PowerShell logging helper.
     Must be run with Windows PowerShell 5.1 by Install.bat or Uninstall.bat.
 #>
@@ -24,7 +24,7 @@ try {
     }
 
     $root = Split-Path -Parent $PSCommandPath
-    $player = Join-Path $root 'Spotify-Corner-Player-v1.4.0.ps1'
+    $player = Join-Path $root 'Spotify-Corner-Player-v1.4.1.ps1'
     $helper = Join-Path $root 'Install-SpotifyPlayerLogs.ps1'
     $engine = Join-Path $PSHOME 'powershell.exe'
 
@@ -41,7 +41,7 @@ try {
     }
 
     if ($Mode -eq 'Check') {
-        Write-Host 'Inspecting existing Spotify Corner Player installation...' -ForegroundColor Cyan
+        Write-Host 'Inspecting existing Corner Media Player installation...' -ForegroundColor Cyan
         & $engine -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File $player -Mode Check
         if ($LASTEXITCODE -ne 0) { throw 'Existing installation could not be safely identified.' }
         Write-Host 'Read-only upgrade check complete.' -ForegroundColor Green
@@ -51,7 +51,7 @@ try {
         if ([Environment]::OSVersion.Version.Build -lt 17763) {
             throw 'Requires Windows 10 version 1809 or later, or Windows 11.'
         }
-        Write-Host 'Installing Spotify Corner Player v1.4.0 for the current Windows user...' -ForegroundColor Cyan
+        Write-Host 'Installing Corner Media Player v1.4.1 for the current Windows user...' -ForegroundColor Cyan
         & $engine -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File $player -Mode Install
         if ($LASTEXITCODE -ne 0) { throw "Player installer failed (exit code $LASTEXITCODE)." }
 
@@ -70,7 +70,7 @@ try {
         Write-Host 'Logs: %LOCALAPPDATA%\SpotifyCornerPlayer\Logs\player.log'
     }
     else {
-        Write-Host 'Removing Spotify Corner Player for the current Windows user...' -ForegroundColor Cyan
+        Write-Host 'Removing Corner Media Player for the current Windows user...' -ForegroundColor Cyan
         & $engine -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File $player -Mode Uninstall
         if ($LASTEXITCODE -ne 0) { throw "Player uninstaller failed (exit code $LASTEXITCODE)." }
         & $engine -NoLogo -NoProfile -ExecutionPolicy Bypass -File $helper -Mode Remove
